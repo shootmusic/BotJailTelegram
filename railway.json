@@ -1,0 +1,9 @@
+{
+  "build": {
+    "builder": "NIXPACKS"
+  },
+  "deploy": {
+    "startCommand": "php railway_bot.php",
+    "restartPolicyType": "ON_FAILURE"
+  }
+}

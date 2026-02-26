@@ -1,7 +1,7 @@
 <?php
 // ====================================================
 // JAILBREAK BOT - RAILWAY EDITION (FINAL FIX)
-// 100% WORKING - WITH PROPER WEBHOOK RESPONSE
+// WITH PROPER WEBHOOK RESPONSE - 100% WORKING
 // ====================================================
 
 // ========== LOAD ENVIRONMENT ==========
@@ -39,20 +39,19 @@ $input = file_get_contents('php://input');
 if (!empty($input)) {
     $update = json_decode($input, true);
     if ($update) {
-        // Process the update
         $db = loadDB();
         processUpdate($update, $db);
         saveDB($db);
         
-        // === CRITICAL FIX: Send response to Telegram ===
+        // ========== CRITICAL FIX: SEND RESPONSE ==========
         http_response_code(200);
         header('Content-Type: application/json');
-        echo json_encode(['ok' => true, 'message' => 'Webhook processed successfully']);
+        echo json_encode(['ok' => true, 'message' => 'Webhook processed']);
         exit;
     } else {
         http_response_code(400);
         header('Content-Type: application/json');
-        echo json_encode(['ok' => false, 'message' => 'Invalid JSON']);
+        echo json_encode(['ok' => false, 'error' => 'Invalid JSON']);
         exit;
     }
 }

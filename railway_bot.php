@@ -1,10 +1,21 @@
 <?php
 // ====================================================
 // JAILBREAK BOT - RAILWAY EDITION (SECURE VERSION)
-// PHP 8.1+ Compatible
+// PHP 8.1+ Compatible with Healthcheck Handler
 // Repo: https://github.com/shootmusic/BotJailTelegram
 // SEMUA SENSITIVE DATA DIAMBIL DARI ENVIRONMENT VARIABLE
 // ====================================================
+
+// ========== HANDLE HEALTHCHECK ==========
+// Kalau akses root (GET request), tampilkan status biar healthcheck lulus
+if ($_SERVER['REQUEST_METHOD'] === 'GET' && $_SERVER['REQUEST_URI'] === '/') {
+    header('Content-Type: text/plain');
+    echo "✅ BOT IS RUNNING!\n";
+    echo "PHP Version: " . phpversion() . "\n";
+    echo "Time: " . date('Y-m-d H:i:s') . "\n";
+    echo "Environment: " . (getenv('RAILWAY_ENVIRONMENT') ?: 'production') . "\n";
+    exit(0);
+}
 
 // ========== KONFIGURASI DARI ENVIRONMENT ==========
 // Pastikan semua variable ini diisi di dashboard Railway!
@@ -34,10 +45,13 @@ $update = json_decode(file_get_contents('php://input'), true);
 if ($update) {
     processUpdate($update);
 } else {
+    // Kalo bukan POST (bukan webhook), tampilkan info aja
+    header('Content-Type: text/plain');
     echo "🔥 Mr.X Jailbreak Bot - Railway Edition (Secure Mode)\n";
     echo "✅ PHP Version: " . phpversion() . "\n";
     echo "✅ All sensitive data loaded from environment variables\n";
-    echo "⏳ " . date('Y-m-d H:i:s');
+    echo "⏳ " . date('Y-m-d H:i:s') . "\n";
+    echo "📡 Waiting for webhook from Telegram...\n";
 }
 
 // ========== FUNGSI UTAMA ==========

@@ -1,24 +1,20 @@
-# ██╗ █████╗ ██╗██╗     ██████╗ ██████╗ ███████╗ █████╗ ██╗  ██╗
-# ██║██╔══██╗██║██║     ██╔══██╗██╔══██╗██╔════╝██╔══██╗██║ ██╔╝
-# ██║███████║██║██║     ██████╔╝██████╔╝█████╗  ███████║█████╔╝ 
-# ██║██╔══██║██║██║     ██╔══██╗██╔══██╗██╔══╝  ██╔══██║██╔═██╗ 
-# ██║██║  ██║██║███████╗██████╔╝██║  ██║███████╗██║  ██║██║  ██╗
-# ╚═╝╚═╝  ╚═╝╚═╝╚══════╝╚═════╝ ╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝
+██████╗  ██████╗ ████████╗     ██╗ █████╗ ██╗██╗     ██████╗ ██████╗ ███████╗ █████╗ ██╗  ██╗
+██╔══██╗██╔══██╗╚══██╔══╝     ██║██╔══██╗██║██║     ██╔══██╗██╔══██╗██╔════╝██╔══██╗██║ ██╔╝
+██████╔╝███████║   ██║        ██║███████║██║██║     ██████╔╝██████╔╝█████╗  ███████║█████╔╝ 
+██╔══██╗██╔══██║   ██║        ██║██╔══██║██║██║     ██╔══██╗██╔══██╗██╔══╝  ██╔══██║██╔═██╗ 
+██████╔╝██║  ██║   ██║        ██║██║  ██║██║███████╗██████╔╝██║  ██║███████╗██║  ██║██║  ██╗
+╚═════╝ ╚═╝  ╚═╝   ╚═╝        ╚═╝╚═╝  ╚═╝╚═╝╚══════╝╚═════╝ ╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝
 
 <p align="center">
-  <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=900&size=40&duration=1&pause=1000&color=F70000&center=true&vCenter=true&width=800&lines=JAILBREAK+STORE;BOT+TELEGRAM+PREMIUM;UNLOCK+ALL+AI;BISA+BELI+BERKALI-KALI" alt="Main Banner" />
-</p>
-
-<p align="center">
-  <img src="https://img.shields.io/badge/Status-Active-success?style=for-the-badge&logo=telegram" />
-  <img src="https://img.shields.io/badge/Version-3.0-blue?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/STATUS-ACTIVE-success?style=for-the-badge&logo=telegram" />
+  <img src="https://img.shields.io/badge/VERSION-3.0-blue?style=for-the-badge" />
   <img src="https://img.shields.io/badge/PHP-8.0-purple?style=for-the-badge&logo=php" />
-  <img src="https://img.shields.io/badge/Railway-Deployed-black?style=for-the-badge&logo=railway" />
-  <img src="https://img.shields.io/badge/Google%20Drive-Storage-yellow?style=for-the-badge&logo=googledrive" />
+  <img src="https://img.shields.io/badge/RAILWAY-DEPLOYED-black?style=for-the-badge&logo=railway" />
+  <img src="https://img.shields.io/badge/GOOGLE%20DRIVE-STORAGE-yellow?style=for-the-badge&logo=googledrive" />
 </p>
 
 <p align="center">
-  <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&size=20&duration=3000&pause=500&color=00FF00&center=true&vCenter=true&width=700&lines=⭐+Selamat+datang+di+bot+premium+kami!;🔓+Script+jailbreak+untuk+semua+AI+populer;💎+Deepseek%2C+Gemini%2C+Kimi+AI+Unlocked!;🎁+Bonus+20x+chat+Gemini+per+pembelian;🚀+Bisa+beli+berkali-kali!+Password+berbeda" alt="Welcome Message" />
+  <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&size=22&duration=3000&pause=500&color=00FF00&center=true&vCenter=true&width=700&lines=🔓+UNLOCK+ALL+AI+-+Deepseek%2C+Gemini%2C+Kimi;💎+Script+jailbreak+premium+tanpa+batasan;🎁+Bonus+20x+chat+Gemini+2.5+Pro;🚀+Bisa+beli+berkali-kali!+Password+berbeda" alt="Welcome Message" />
 </p>
 
 ---
@@ -26,22 +22,22 @@
 ## 📋 **TENTANG BOT**
 
 <p align="center">
-  <table align="center" border="1" cellpadding="10" style="border-collapse: collapse; border: 2px solid #444;">
+  <table align="center" border="1" cellpadding="12" style="border-collapse: collapse; border: 2px solid #555; background-color: #0d1117;">
     <tr>
-      <td align="center" bgcolor="#222"><b>🤖 Nama Bot</b></td>
-      <td align="center" bgcolor="#111"><code>@Jaaillbot</code></td>
+      <td align="right" style="background-color: #161b22;"><b>🤖 Nama Bot</b></td>
+      <td style="background-color: #0d1117;"><code>@Jaaillbot</code></td>
     </tr>
     <tr>
-      <td align="center" bgcolor="#222"><b>👤 Admin</b></td>
-      <td align="center" bgcolor="#111"><code>@Kikomaukiko</code></td>
+      <td align="right" style="background-color: #161b22;"><b>👤 Admin</b></td>
+      <td style="background-color: #0d1117;"><code>@Kikomaukiko</code></td>
     </tr>
     <tr>
-      <td align="center" bgcolor="#222"><b>💰 Harga</b></td>
-      <td align="center" bgcolor="#111"><code>Rp 25.000</code></td>
+      <td align="right" style="background-color: #161b22;"><b>💰 Harga</b></td>
+      <td style="background-color: #0d1117;"><code>Rp 25.000</code></td>
     </tr>
     <tr>
-      <td align="center" bgcolor="#222"><b>🌐 Saweria</b></td>
-      <td align="center" bgcolor="#111"><a href="https://saweria.co/Kikomaukiko">saweria.co/Kikomaukiko</a></td>
+      <td align="right" style="background-color: #161b22;"><b>🌐 Saweria</b></td>
+      <td style="background-color: #0d1117;"><a href="https://saweria.co/Kikomaukiko">saweria.co/Kikomaukiko</a></td>
     </tr>
   </table>
 </p>
@@ -51,10 +47,10 @@
 ## ✨ **FITUR PREMIUM**
 
 <p align="center">
-  <table align="center" border="1" cellpadding="10" style="border-collapse: collapse; border: 2px solid #444;">
+  <table align="center" border="1" cellpadding="12" style="border-collapse: collapse; border: 2px solid #555;">
     <tr>
-      <th align="center" bgcolor="#333">Fitur</th>
-      <th align="center" bgcolor="#333">Keterangan</th>
+      <th align="center" style="background-color: #161b22;">Fitur</th>
+      <th align="center" style="background-color: #161b22;">Keterangan</th>
     </tr>
     <tr>
       <td align="center">🔓 <b>Unlock All AI</b></td>
@@ -133,10 +129,6 @@
 ## 📞 **KONTAK & DUKUNGAN**
 
 <p align="center">
-  <img src="assets/foto3.jpg" width="600" style="border-radius: 10px;" />
-</p>
-
-<p align="center">
   <a href="https://t.me/Kikomaukiko">
     <img src="https://img.shields.io/badge/Telegram-Admin-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white" />
   </a>
@@ -146,6 +138,10 @@
   <a href="https://github.com/shootmusic/BotJailTelegram">
     <img src="https://img.shields.io/badge/GitHub-Repo-100000?style=for-the-badge&logo=github&logoColor=white" />
   </a>
+</p>
+
+<p align="center">
+  <img src="assets/foto3.jpg" width="600" style="border-radius: 10px;" />
 </p>
 
 <p align="center">

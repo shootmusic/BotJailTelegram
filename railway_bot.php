@@ -1,66 +1,56 @@
 <?php
 // ====================================================
-// JAILBREAK BOT - RAILWAY EDITION (SECURE VERSION)
-// PHP 8.1+ Compatible with Healthcheck Handler
+// JAILBREAK BOT - RAILWAY EDITION (FIXED VERSION)
+// PHP 8.1+ Compatible with Built-in Server
 // Repo: https://github.com/shootmusic/BotJailTelegram
 // SEMUA SENSITIVE DATA DIAMBIL DARI ENVIRONMENT VARIABLE
 // ====================================================
 
-// ========== HANDLE HEALTHCHECK ==========
-// Kalau akses root (GET request), tampilkan status biar healthcheck lulus
-if ($_SERVER['REQUEST_METHOD'] === 'GET' && $_SERVER['REQUEST_URI'] === '/') {
-    header('Content-Type: text/plain');
-    echo "✅ BOT IS RUNNING!\n";
-    echo "PHP Version: " . phpversion() . "\n";
-    echo "Time: " . date('Y-m-d H:i:s') . "\n";
-    echo "Environment: " . (getenv('RAILWAY_ENVIRONMENT') ?: 'production') . "\n";
-    exit(0);
+// ========== HANDLE WEBHOOK ==========
+// Baca input dari Telegram (ini selalu ada kalo webhook)
+$input = file_get_contents('php://input');
+
+// Kalo ada input, berarti ini webhook dari Telegram
+if ($input) {
+    $update = json_decode($input, true);
+    if ($update) {
+        // Proses update
+        define('BOT_TOKEN', getenv('BOT_TOKEN') ?: die('❌ BOT_TOKEN tidak ditemukan'));
+        define('ADMIN_ID', getenv('ADMIN_ID') ?: die('❌ ADMIN_ID tidak ditemukan'));
+        define('GEMINI_API_KEY', getenv('GEMINI_API_KEY') ?: die('❌ GEMINI_API_KEY tidak ditemukan'));
+        define('SAWERIA_LINK', getenv('SAWERIA_LINK') ?: 'https://saweria.co/Kikomaukiko');
+        define('MASTER_PDF_ID', '1dK2tqUMK5WMGNPevoWipadd3y1c_XWn1');
+        define('PREVIEW_FILE_ID', 'BQACAgUAAxkBAANQaZ8AAcdi8rwd5JLrKVvV1x-h_vVrAAKXGwACR4b5VLZWFuSlBdUIOgQ');
+        define('DB_FILE', 'database.json');
+        
+        // Load database
+        $db = file_exists(DB_FILE) ? json_decode(file_get_contents(DB_FILE), true) : [
+            'transactions' => [],
+            'pending' => [],
+            'chats' => []
+        ];
+        
+        // Proses update
+        processUpdate($update, $db);
+        exit;
+    }
 }
 
-// ========== KONFIGURASI DARI ENVIRONMENT ==========
-// Pastikan semua variable ini diisi di dashboard Railway!
-define('BOT_TOKEN', getenv('BOT_TOKEN') ?: die('❌ BOT_TOKEN tidak ditemukan di environment'));
-define('ADMIN_ID', getenv('ADMIN_ID') ?: die('❌ ADMIN_ID tidak ditemukan di environment'));
-define('GEMINI_API_KEY', getenv('GEMINI_API_KEY') ?: die('❌ GEMINI_API_KEY tidak ditemukan di environment'));
-define('SAWERIA_LINK', getenv('SAWERIA_LINK') ?: 'https://saweria.co/Kikomaukiko');
+// ========== HANDLE HEALTHCHECK / ROOT ACCESS ==========
+// Kalo gak ada input, berarti ini akses root (healthcheck)
+header('Content-Type: text/plain');
+echo "✅ BOT IS RUNNING!\n";
+echo "PHP Version: " . phpversion() . "\n";
+echo "Time: " . date('Y-m-d H:i:s') . "\n";
+echo "Environment: " . (getenv('RAILWAY_ENVIRONMENT') ?: 'production') . "\n";
+echo "Webhook URL: https://botjailtelegram.up.railway.app\n";
+exit(0);
 
-// GOOGLE DRIVE FILE ID (ini aman ditampilkan karena cuma ID file)
-define('MASTER_PDF_ID', '1dK2tqUMK5WMGNPevoWipadd3y1c_XWn1');
-define('PREVIEW_FILE_ID', 'BQACAgUAAxkBAANQaZ8AAcdi8rwd5JLrKVvV1x-h_vVrAAKXGwACR4b5VLZWFuSlBdUIOgQ');
-
-// ========== DATABASE (JSON) ==========
-define('DB_FILE', 'database.json');
-$db = file_exists(DB_FILE) ? json_decode(file_get_contents(DB_FILE), true) : [
-    'transactions' => [],
-    'pending' => [],
-    'chats' => []
-];
-
-function saveDB($db) {
-    file_put_contents(DB_FILE, json_encode($db, JSON_PRETTY_PRINT));
-}
-
-// ========== WEBHOOK HANDLER ==========
-$update = json_decode(file_get_contents('php://input'), true);
-if ($update) {
-    processUpdate($update);
-} else {
-    // Kalo bukan POST (bukan webhook), tampilkan info aja
-    header('Content-Type: text/plain');
-    echo "🔥 Mr.X Jailbreak Bot - Railway Edition (Secure Mode)\n";
-    echo "✅ PHP Version: " . phpversion() . "\n";
-    echo "✅ All sensitive data loaded from environment variables\n";
-    echo "⏳ " . date('Y-m-d H:i:s') . "\n";
-    echo "📡 Waiting for webhook from Telegram...\n";
-}
-
-// ========== FUNGSI UTAMA ==========
-function processUpdate($update) {
-    global $db;
-    
+// ========== FUNGSI UTAMA (DIPINDAHKAN KE SINI) ==========
+function processUpdate($update, &$db) {
     // Callback query (tombol)
     if (isset($update['callback_query'])) {
-        handleCallbackQuery($update['callback_query']);
+        handleCallbackQuery($update['callback_query'], $db);
         return;
     }
     
@@ -74,40 +64,44 @@ function processUpdate($update) {
     
     // Handle foto / dokumen (bukti transfer)
     if (isset($msg['photo']) || isset($msg['document'])) {
-        handlePaymentProof($chat_id, $msg, $username, $nama);
+        handlePaymentProof($chat_id, $msg, $username, $nama, $db);
         return;
     }
     
     // Command handler
     switch ($text) {
         case '/start':
-            sapaUser($chat_id, $nama, $username);
+            sapaUser($chat_id, $nama, $username, $db);
             break;
         case '/katalog':
-            tampilKatalog($chat_id);
+            tampilKatalog($chat_id, $db);
             break;
         case '/beli':
-            prosesBeli($chat_id, $username, $nama);
+            prosesBeli($chat_id, $username, $nama, $db);
             break;
         case '/chat':
-            cekChatAccess($chat_id, $nama);
+            cekChatAccess($chat_id, $nama, $db);
             break;
         case '/limit':
-            cekLimit($chat_id);
+            cekLimit($chat_id, $db);
             break;
         case '/lupapassword':
-            kirimUlangPassword($chat_id);
+            kirimUlangPassword($chat_id, $db);
             break;
         default:
             if (isset($db['chats'][$chat_id]['mode']) && $db['chats'][$chat_id]['mode'] == 'chat') {
-                handleChat($chat_id, $text, $nama);
+                handleChat($chat_id, $text, $nama, $db);
             }
             break;
     }
 }
 
+function saveDB($db) {
+    file_put_contents(DB_FILE, json_encode($db, JSON_PRETTY_PRINT));
+}
+
 // ========== CALLBACK QUERY (TOMBOL KONFIRMASI) ==========
-function handleCallbackQuery($callback) {
+function handleCallbackQuery($callback, &$db) {
     $data = $callback['data'];
     $chat_id = $callback['message']['chat']['id'];
     $message_id = $callback['message']['message_id'];
@@ -122,7 +116,7 @@ function handleCallbackQuery($callback) {
         $user_chat_id = str_replace('confirm_', '', $data);
         
         // KIRIM PDF DENGAN PASSWORD BARU (SINKRON)
-        kirimPDFdenganPassword($user_chat_id);
+        kirimPDFdenganPassword($user_chat_id, $db);
         
         // Update pesan admin
         $new_caption = $callback['message']['caption'] . "\n\n✅ *SUDAH DIKONFIRMASI*";
@@ -132,9 +126,8 @@ function handleCallbackQuery($callback) {
     }
 }
 
-// ========== FUNGSI KIRIM PDF DENGAN PASSWORD (SINKRON 100%) ==========
-function kirimPDFdenganPassword($chat_id) {
-    global $db;
+// ========== FUNGSI KIRIM PDF DENGAN PASSWORD ==========
+function kirimPDFdenganPassword($chat_id, &$db) {
     
     // 1. Generate password random
     $part1 = strtoupper(substr(md5(uniqid() . $chat_id . rand()), 0, 4));
@@ -217,8 +210,7 @@ function kirimPDFdenganPassword($chat_id) {
 }
 
 // ========== FUNGSI HANDLE BUKTI TRANSFER ==========
-function handlePaymentProof($chat_id, $msg, $username, $nama) {
-    global $db;
+function handlePaymentProof($chat_id, $msg, $username, $nama, &$db) {
     
     $caption = "🔔 *BUKTI TRANSFER DARI USER*\n\n"
              . "Nama: $nama\n"
@@ -246,7 +238,7 @@ function handlePaymentProof($chat_id, $msg, $username, $nama) {
 }
 
 // ========== FUNGSI SAPA USER ==========
-function sapaUser($chat_id, $nama, $username) {
+function sapaUser($chat_id, $nama, $username, &$db) {
     $text = "Halo *$nama*! 😂😂\n"
           . "Selamat datang di *JAILBREAK SCRIPT MARKET*\n\n"
           . "Gue jual script² jailbreak premium buat unlock AI tanpa batasan.\n\n"
@@ -265,7 +257,7 @@ function sapaUser($chat_id, $nama, $username) {
 }
 
 // ========== FUNGSI KATALOG ==========
-function tampilKatalog($chat_id) {
+function tampilKatalog($chat_id, &$db) {
     kirimFileId($chat_id, PREVIEW_FILE_ID, "📄 *PREVIEW PDF (2 Halaman Pertama)*\n\nIni contoh isinya.");
     
     $text = "━━━━━━━━━━━━━━━━\n"
@@ -291,8 +283,7 @@ function tampilKatalog($chat_id) {
 }
 
 // ========== FUNGSI PROSES BELI ==========
-function prosesBeli($chat_id, $username, $nama) {
-    global $db;
+function prosesBeli($chat_id, $username, $nama, &$db) {
     
     $db['pending'][] = [
         'chat_id' => $chat_id,
@@ -323,8 +314,7 @@ function prosesBeli($chat_id, $username, $nama) {
 }
 
 // ========== FUNGSI LUPA PASSWORD ==========
-function kirimUlangPassword($chat_id) {
-    global $db;
+function kirimUlangPassword($chat_id, &$db) {
     
     $found = false;
     $latest_password = '';
@@ -349,8 +339,7 @@ function kirimUlangPassword($chat_id) {
 }
 
 // ========== FUNGSI GEMINI ==========
-function cekChatAccess($chat_id, $nama) {
-    global $db;
+function cekChatAccess($chat_id, $nama, &$db) {
     if (!isset($db['chats'][$chat_id])) {
         kirimPesan($chat_id, "❌ Lo belum punya akses chat. Beli dulu: /beli");
         return;
@@ -365,8 +354,7 @@ function cekChatAccess($chat_id, $nama) {
     kirimPesan($chat_id, "🤖 Mode chat aktif! Sisa: $remaining\nKetik /stop buat keluar.");
 }
 
-function handleChat($chat_id, $prompt, $nama) {
-    global $db;
+function handleChat($chat_id, $prompt, $nama, &$db) {
     if ($prompt == '/stop') {
         $db['chats'][$chat_id]['mode'] = 'idle';
         saveDB($db);
@@ -404,8 +392,7 @@ function callGemini($prompt) {
     return $result['candidates'][0]['content']['parts'][0]['text'] ?? "⚠️ Maaf, Gemini gak bisa jawab.";
 }
 
-function cekLimit($chat_id) {
-    global $db;
+function cekLimit($chat_id, &$db) {
     if (!isset($db['chats'][$chat_id])) {
         kirimPesan($chat_id, "Lo belum punya akses chat. Beli dulu: /beli");
         return;

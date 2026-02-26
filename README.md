@@ -1,9 +1,5 @@
-██████╗  ██████╗ ████████╗     ██╗ █████╗ ██╗██╗     ██████╗ ██████╗ ███████╗ █████╗ ██╗  ██╗
-██╔══██╗██╔══██╗╚══██╔══╝     ██║██╔══██╗██║██║     ██╔══██╗██╔══██╗██╔════╝██╔══██╗██║ ██╔╝
-██████╔╝███████║   ██║        ██║███████║██║██║     ██████╔╝██████╔╝█████╗  ███████║█████╔╝ 
-██╔══██╗██╔══██║   ██║        ██║██╔══██║██║██║     ██╔══██╗██╔══██╗██╔══╝  ██╔══██║██╔═██╗ 
-██████╔╝██║  ██║   ██║        ██║██║  ██║██║███████╗██████╔╝██║  ██║███████╗██║  ██║██║  ██╗
-╚═════╝ ╚═╝  ╚═╝   ╚═╝        ╚═╝╚═╝  ╚═╝╚═╝╚══════╝╚═════╝ ╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝
+# 🔥 JAILBREAK STORE 🔥
+### Bot Telegram Premium untuk Unlock All AI
 
 <p align="center">
   <img src="https://img.shields.io/badge/STATUS-ACTIVE-success?style=for-the-badge&logo=telegram" />
@@ -14,70 +10,32 @@
 </p>
 
 <p align="center">
-  <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&size=22&duration=3000&pause=500&color=00FF00&center=true&vCenter=true&width=700&lines=🔓+UNLOCK+ALL+AI+-+Deepseek%2C+Gemini%2C+Kimi;💎+Script+jailbreak+premium+tanpa+batasan;🎁+Bonus+20x+chat+Gemini+2.5+Pro;🚀+Bisa+beli+berkali-kali!+Password+berbeda" alt="Welcome Message" />
+  <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&size=18&duration=3000&pause=500&color=00FF00&center=true&vCenter=true&width=600&lines=🔓+Unlock+Deepseek%2C+Gemini%2C+Kimi+AI;💎+Script+jailbreak+premium+tanpa+batasan;🎁+Bonus+20x+chat+Gemini+2.5+Pro;🚀+Bisa+beli+berkali-kali!+Password+berbeda" alt="Welcome Message" />
 </p>
 
 ---
 
 ## 📋 **TENTANG BOT**
 
-<p align="center">
-  <table align="center" border="1" cellpadding="12" style="border-collapse: collapse; border: 2px solid #555; background-color: #0d1117;">
-    <tr>
-      <td align="right" style="background-color: #161b22;"><b>🤖 Nama Bot</b></td>
-      <td style="background-color: #0d1117;"><code>@Jaaillbot</code></td>
-    </tr>
-    <tr>
-      <td align="right" style="background-color: #161b22;"><b>👤 Admin</b></td>
-      <td style="background-color: #0d1117;"><code>@Kikomaukiko</code></td>
-    </tr>
-    <tr>
-      <td align="right" style="background-color: #161b22;"><b>💰 Harga</b></td>
-      <td style="background-color: #0d1117;"><code>Rp 25.000</code></td>
-    </tr>
-    <tr>
-      <td align="right" style="background-color: #161b22;"><b>🌐 Saweria</b></td>
-      <td style="background-color: #0d1117;"><a href="https://saweria.co/Kikomaukiko">saweria.co/Kikomaukiko</a></td>
-    </tr>
-  </table>
-</p>
+| | |
+|---|---|
+| **🤖 Nama Bot** | `@Jaaillbot` |
+| **👤 Admin** | `@Kikomaukiko` |
+| **💰 Harga** | `Rp 25.000` |
+| **🌐 Saweria** | [saweria.co/Kikomaukiko](https://saweria.co/Kikomaukiko) |
 
 ---
 
 ## ✨ **FITUR PREMIUM**
 
-<p align="center">
-  <table align="center" border="1" cellpadding="12" style="border-collapse: collapse; border: 2px solid #555;">
-    <tr>
-      <th align="center" style="background-color: #161b22;">Fitur</th>
-      <th align="center" style="background-color: #161b22;">Keterangan</th>
-    </tr>
-    <tr>
-      <td align="center">🔓 <b>Unlock All AI</b></td>
-      <td>Deepseek, Gemini, Kimi AI tanpa batasan</td>
-    </tr>
-    <tr>
-      <td align="center">📄 <b>Preview PDF</b></td>
-      <td>Lihat 2 halaman pertama gratis</td>
-    </tr>
-    <tr>
-      <td align="center">🔑 <b>Password Unik</b></td>
-      <td>Setiap transaksi password berbeda</td>
-    </tr>
-    <tr>
-      <td align="center">💬 <b>Gemini Chat</b></td>
-      <td>20x chat per pembelian (bisa diakumulasi)</td>
-    </tr>
-    <tr>
-      <td align="center">🔄 <b>Beli Berkali-kali</b></td>
-      <td>Gak ada batasan, password baru tiap beli</td>
-    </tr>
-    <tr>
-      <td align="center">✅ <b>Konfirmasi Tombol</b></td>
-      <td>Admin tinggal klik, bot kirim password</td>
-    </tr>
-  </table>
-</p>
+| Fitur | Keterangan |
+|-------|------------|
+| 🔓 **Unlock All AI** | Deepseek, Gemini, Kimi AI tanpa batasan |
+| 📄 **Preview PDF** | Lihat 2 halaman pertama gratis |
+| 🔑 **Password Unik** | Setiap transaksi password berbeda |
+| 💬 **Gemini Chat** | 20x chat per pembelian (bisa diakumulasi) |
+| 🔄 **Beli Berkali-kali** | Gak ada batasan, password baru tiap beli |
+| ✅ **Konfirmasi Tombol** | Admin tinggal klik, bot kirim password |
 
 ---
 
@@ -144,18 +102,20 @@
   <img src="assets/foto3.jpg" width="600" style="border-radius: 10px;" />
 </p>
 
-<p align="center">
-  <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&size=14&duration=4000&pause=500&color=F70000&center=true&vCenter=true&width=500&lines=🔥+Jangan+lupa+beli+script+jailbreak+nya+ya!;🚀+Gas+terus+tanpa+batas!;🎉+Makasih+udah+berkunjung!" alt="Footer Message" />
-</p>
-
 ---
 
+## ⭐ **DUKUNGAN**
+
 <p align="center">
-  <b>⭐ Jangan lupa ⭐ repo ini kalo bermanfaat!</b>
+  <b>Jangan lupa ⭐ repo ini kalau bermanfaat!</b>
 </p>
 
 <p align="center">
   <img src="https://img.shields.io/badge/Lisensi-MIT-green?style=flat-square" />
   <img src="https://img.shields.io/badge/Dibuat%20dengan-❤️-red?style=flat-square" />
   <img src="https://img.shields.io/badge/Tahun-2026-blue?style=flat-square" />
+</p>
+
+<p align="center">
+  <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&size=14&duration=4000&pause=500&color=F70000&center=true&vCenter=true&width=400&lines=🔥+Gas+terus+tanpa+batas!;🎉+Makasih+udah+berkunjung!" alt="Footer Message" />
 </p>

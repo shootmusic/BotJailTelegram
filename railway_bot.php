@@ -1,7 +1,7 @@
 <?php
 // ====================================================
-// JAILBREAK BOT - RAILWAY EDITION (FINAL FIX)
-// WITH PROPER WEBHOOK RESPONSE - 100% WORKING
+// JAILBREAK BOT - RAILWAY EDITION (FINAL VERSION)
+// PASSWORD MATCHING 100% - SETIAP TRANSAKSI PASSWORD UNIK
 // ====================================================
 
 // ========== LOAD ENVIRONMENT ==========
@@ -43,7 +43,6 @@ if (!empty($input)) {
         processUpdate($update, $db);
         saveDB($db);
         
-        // ========== CRITICAL FIX: SEND RESPONSE ==========
         http_response_code(200);
         header('Content-Type: application/json');
         echo json_encode(['ok' => true, 'message' => 'Webhook processed']);
@@ -146,47 +145,88 @@ function handleCallbackQuery($callback, &$db) {
     
     if (strpos($data, 'confirm_') === 0) {
         $user_chat_id = str_replace('confirm_', '', $data);
-        kirimPDFdenganPassword($user_chat_id, $db);
         
-        $new_caption = $callback['message']['caption'] . "\n\n✅ *SUDAH DIKONFIRMASI*";
-        editMessageCaption($chat_id, $message_id, $new_caption);
-        answerCallbackQuery($callback['id'], "✅ PDF udah dikirim dengan password baru!");
+        // Proses download dan kirim PDF dengan password
+        $result = kirimPDFdenganPassword($user_chat_id, $db);
+        
+        if ($result['success']) {
+            $new_caption = $callback['message']['caption'] . "\n\n✅ *SUDAH DIKONFIRMASI*\nPassword: `{$result['password']}`";
+            editMessageCaption($chat_id, $message_id, $new_caption);
+            answerCallbackQuery($callback['id'], "✅ PDF udah dikirim! Password: {$result['password']}");
+        } else {
+            $new_caption = $callback['message']['caption'] . "\n\n❌ *GAGAL: {$result['error']}*";
+            editMessageCaption($chat_id, $message_id, $new_caption);
+            answerCallbackQuery($callback['id'], "❌ Gagal: {$result['error']}");
+        }
     }
 }
 
-// ========== FUNGSI KIRIM PDF ==========
+// ========== FUNGSI KIRIM PDF DENGAN PASSWORD (MATCHING 100%) ==========
 function kirimPDFdenganPassword($chat_id, &$db) {
+    
+    // 1. Generate password random dengan format XXXX-XXXX-XXXX
     $part1 = strtoupper(substr(md5(uniqid() . $chat_id . rand()), 0, 4));
     $part2 = strtoupper(substr(md5(uniqid() . time() . rand()), 0, 4));
     $part3 = rand(1000, 9999);
     $password = $part1 . '-' . $part2 . '-' . $part3;
     
+    // 2. Download file dari Google Drive
     $master_file = 'master_' . $chat_id . '_' . time() . '.pdf';
+    
+    // Coba download dengan gdown, fallback ke curl/wget
+    $download_success = false;
+    $download_error = '';
+    
+    // Method 1: gdown
     $download_cmd = "gdown https://drive.google.com/uc?id=" . MASTER_PDF_ID . " -O " . $master_file . " 2>&1";
     exec($download_cmd, $dl_output, $dl_return);
     
-    if ($dl_return !== 0) {
-        kirimPesan(ADMIN_ID, "❌ Gagal download: " . implode("\n", $dl_output));
-        kirimPesan($chat_id, "⚠️ Error, hubungi admin.");
-        return;
+    if ($dl_return === 0 && file_exists($master_file) && filesize($master_file) > 0) {
+        $download_success = true;
+    } else {
+        // Method 2: curl fallback
+        $curl_cmd = "curl -L -b /tmp/cookie.txt -c /tmp/cookie.txt -o " . $master_file . " 'https://drive.google.com/uc?export=download&id=" . MASTER_PDF_ID . "' 2>&1";
+        exec($curl_cmd, $curl_output, $curl_return);
+        
+        if ($curl_return === 0 && file_exists($master_file) && filesize($master_file) > 0) {
+            $download_success = true;
+        } else {
+            $download_error = "Gagal download: " . implode("\n", array_merge($dl_output, $curl_output));
+        }
     }
     
+    if (!$download_success) {
+        kirimPesan(ADMIN_ID, "❌ Gagal download PDF untuk user $chat_id\n$download_error");
+        return ['success' => false, 'error' => 'Gagal download file'];
+    }
+    
+    // 3. Enkrip file dengan password yang baru (PASSWORD MATCHING 100%)
     $encrypted_file = 'enc_' . $chat_id . '_' . time() . '.pdf';
+    
+    // Gunakan qpdf untuk enkripsi dengan password yang sama
     $encrypt_cmd = "qpdf --encrypt user-password={$password} owner-password={$password} 256 -- "
                  . escapeshellarg($master_file) . " "
                  . escapeshellarg($encrypted_file) . " 2>&1";
     
     exec($encrypt_cmd, $enc_output, $enc_return);
     
-    if ($enc_return !== 0) {
-        kirimPesan(ADMIN_ID, "❌ Gagal encrypt: " . implode("\n", $enc_output));
+    if ($enc_return !== 0 || !file_exists($encrypted_file)) {
+        kirimPesan(ADMIN_ID, "❌ Gagal encrypt PDF untuk user $chat_id: " . implode("\n", $enc_output));
         unlink($master_file);
-        return;
+        return ['success' => false, 'error' => 'Gagal encrypt file'];
     }
     
-    $caption = "📄 *FULL PDF JAILBREAK*\n\n🔑 *Password:* `$password`\n\n⚠️ Password sinkron 100%.";
-    kirimFile($chat_id, $encrypted_file, $caption);
+    // 4. Kirim file ke user
+    $caption = "📄 *FULL PDF JAILBREAK*\n\n"
+             . "🔑 *Password:* `$password`\n\n"
+             . "⚠️ Password ini 100% SINKRON dengan file PDF.\n"
+             . "Gunakan password di atas untuk membuka file.\n\n"
+             . "📌 Kalo lupa password, ketik /lupapassword\n"
+             . "🎁 Bonus chat: /chat (sisa " . (isset($db['chats'][$chat_id]['remaining']) ? $db['chats'][$chat_id]['remaining'] + 20 : 20) . ")";
     
+    $send_result = kirimFile($chat_id, $encrypted_file, $caption);
+    
+    // 5. Simpan ke database
     $db['transactions'][] = [
         'chat_id' => $chat_id,
         'password' => $password,
@@ -203,9 +243,14 @@ function kirimPDFdenganPassword($chat_id, &$db) {
     // Hapus dari pending
     $db['pending'] = array_filter($db['pending'], fn($p) => $p['chat_id'] != $chat_id);
     
-    unlink($master_file);
-    unlink($encrypted_file);
+    // Hapus file sementara
+    @unlink($master_file);
+    @unlink($encrypted_file);
+    
+    // Notifikasi admin
     kirimPesan(ADMIN_ID, "✅ PDF terkirim ke `$chat_id`\nPassword: `$password`");
+    
+    return ['success' => true, 'password' => $password];
 }
 
 // ========== FUNGSI PAYMENT PROOF ==========
@@ -372,7 +417,7 @@ function kirimFileId($chat_id, $file_id, $caption = '') {
 function kirimFile($chat_id, $file_path, $caption = '') {
     if (!file_exists($file_path)) {
         kirimPesan(ADMIN_ID, "❌ File $file_path tidak ditemukan!");
-        return;
+        return false;
     }
     
     $url = "https://api.telegram.org/bot" . BOT_TOKEN . "/sendDocument";
@@ -387,9 +432,12 @@ function kirimFile($chat_id, $file_path, $caption = '') {
     curl_setopt($ch, CURLOPT_POST, true);
     curl_setopt($ch, CURLOPT_POSTFIELDS, $post);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 30);
-    curl_exec($ch);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 60);
+    $result = curl_exec($ch);
+    $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     curl_close($ch);
+    
+    return $http_code == 200;
 }
 
 function kirimFotoWithKeyboard($chat_id, $file_id, $caption, $keyboard) {

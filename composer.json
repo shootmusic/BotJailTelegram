@@ -4,7 +4,11 @@
     },
     "scripts": {
         "post-install-cmd": [
-            "apt-get update && apt-get install -y qpdf python3-pip && pip3 install gdown"
+            "apt-get update",
+            "apt-get install -y python3 python3-pip qpdf wget curl",
+            "pip3 install --upgrade pip",
+            "pip3 install gdown --break-system-packages",
+            "gdown --help > /dev/null 2>&1 || echo 'gdown installation failed'"
         ]
     }
 }

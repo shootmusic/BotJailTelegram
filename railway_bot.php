@@ -1,16 +1,18 @@
 <?php
 // ====================================================
-// JAILBREAK BOT - RAILWAY EDITION (FIX PASSWORD SINKRON)
+// JAILBREAK BOT - RAILWAY EDITION (SECURE VERSION)
 // Repo: https://github.com/shootmusic/BotJailTelegram
+// SEMUA SENSITIVE DATA DIAMBIL DARI ENVIRONMENT VARIABLE
 // ====================================================
 
-// ========== KONFIGURASI ==========
-define('BOT_TOKEN', '8045718722:AAGfUipGjliHIqB0zJ9Y7y0JUCyQ8eYGyps');
-define('ADMIN_ID', '7710155531');
-define('GEMINI_API_KEY', 'AIzaSyB2ywseug3IrYfF0qN0jg5MArCgt7wE09k');
-define('SAWERIA_LINK', 'https://saweria.co/Kikomaukiko');
+// ========== KONFIGURASI DARI ENVIRONMENT ==========
+// Pastikan semua variable ini diisi di dashboard Railway!
+define('BOT_TOKEN', getenv('BOT_TOKEN') ?: die('❌ BOT_TOKEN tidak ditemukan di environment'));
+define('ADMIN_ID', getenv('ADMIN_ID') ?: die('❌ ADMIN_ID tidak ditemukan di environment'));
+define('GEMINI_API_KEY', getenv('GEMINI_API_KEY') ?: die('❌ GEMINI_API_KEY tidak ditemukan di environment'));
+define('SAWERIA_LINK', getenv('SAWERIA_LINK') ?: 'https://saweria.co/Kikomaukiko');
 
-// GOOGLE DRIVE FILE ID (dari link lu)
+// GOOGLE DRIVE FILE ID (ini aman ditampilkan karena cuma ID file)
 define('MASTER_PDF_ID', '1dK2tqUMK5WMGNPevoWipadd3y1c_XWn1');
 define('PREVIEW_FILE_ID', 'BQACAgUAAxkBAANQaZ8AAcdi8rwd5JLrKVvV1x-h_vVrAAKXGwACR4b5VLZWFuSlBdUIOgQ');
 
@@ -31,8 +33,8 @@ $update = json_decode(file_get_contents('php://input'), true);
 if ($update) {
     processUpdate($update);
 } else {
-    echo "🔥 Mr.X Jailbreak Bot - Railway Edition\n";
-    echo "✅ Password SINKRON mode active\n";
+    echo "🔥 Mr.X Jailbreak Bot - Railway Edition (Secure Mode)\n";
+    echo "✅ All sensitive data loaded from environment variables\n";
     echo "⏳ " . date('Y-m-d H:i:s');
 }
 

@@ -4,6 +4,8 @@
   },
   "deploy": {
     "startCommand": "php railway_bot.php",
-    "restartPolicyType": "ON_FAILURE"
+    "restartPolicyType": "ON_FAILURE",
+    "healthcheckPath": "/",
+    "healthcheckTimeout": 100
   }
 }

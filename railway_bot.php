@@ -1,6 +1,7 @@
 <?php
 // ====================================================
 // JAILBREAK BOT - RAILWAY EDITION (SECURE VERSION)
+// PHP 8.1+ Compatible
 // Repo: https://github.com/shootmusic/BotJailTelegram
 // SEMUA SENSITIVE DATA DIAMBIL DARI ENVIRONMENT VARIABLE
 // ====================================================
@@ -34,6 +35,7 @@ if ($update) {
     processUpdate($update);
 } else {
     echo "🔥 Mr.X Jailbreak Bot - Railway Edition (Secure Mode)\n";
+    echo "✅ PHP Version: " . phpversion() . "\n";
     echo "✅ All sensitive data loaded from environment variables\n";
     echo "⏳ " . date('Y-m-d H:i:s');
 }

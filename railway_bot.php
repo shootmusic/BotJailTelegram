@@ -1,8 +1,9 @@
 <?php
 // ====================================================
 // JAILBREAK BOT - RAILWAY EDITION (FINAL VERSION)
-// PASSWORD STATIS: GQ3A-J6G8-5235
-// FILE_ID UPDATED: 2026-02-26
+// PASSWORD: GQ3A-J6G8-5235
+// FILE: ScriptMaster.pdf
+// GEMINI FIXED
 // ====================================================
 
 // ========== LOAD ENVIRONMENT ==========
@@ -20,8 +21,8 @@ define('GEMINI_API_KEY', getenv('GEMINI_API_KEY'));
 define('SAWERIA_LINK', getenv('SAWERIA_LINK') ?: 'https://saweria.co/Kikomaukiko');
 define('PREVIEW_FILE_ID', 'BQACAgUAAxkBAANQaZ8AAcdi8rwd5JLrKVvV1x-h_vVrAAKXGwACR4b5VLZWFuSlBdUIOgQ');
 
-// ========== FILE PDF UTAMA (SUDAH DIENKRIP) ==========
-define('FULL_PDF_FILE_ID', 'BQACAgUAAxkDAAIBM2mgElb-eIC0xnBoHdfvWtaMi1I2AAK9HAAC6xYAAVXUyCL54hZvLDoE');
+// ========== FILE PDF UTAMA (ScriptMaster.pdf) ==========
+define('FULL_PDF_FILE_ID', 'BQACAgUAAxkDAAIBQWmgFiL1zVp9BTcqBq1o4GHYYSUmAALEHAAC6xYAAVXigx0pjSHNNToE');
 define('PDF_PASSWORD', 'GQ3A-J6G8-5235');
 
 define('DB_FILE', 'database.json');
@@ -70,7 +71,8 @@ echo "✅ PHP Version: " . phpversion() . "\n";
 echo "✅ Bot Token: " . substr(BOT_TOKEN, 0, 15) . "...\n";
 echo "✅ Admin ID: " . ADMIN_ID . "\n";
 echo "✅ Gemini API: " . substr(GEMINI_API_KEY, 0, 10) . "...\n";
-echo "✅ PDF Password: " . PDF_PASSWORD . "\n";
+echo "✅ File: ScriptMaster.pdf\n";
+echo "✅ Password: " . PDF_PASSWORD . "\n";
 echo "✅ Time: " . date('Y-m-d H:i:s') . "\n";
 echo "✅ Environment: " . (getenv('RAILWAY_ENVIRONMENT') ?: 'production') . "\n";
 echo "==========================\n";
@@ -167,12 +169,12 @@ function handleCallbackQuery($callback, &$db) {
     }
 }
 
-// ========== FUNGSI KIRIM PDF (SEDERHANA, TANPA QPDF) ==========
+// ========== FUNGSI KIRIM PDF ==========
 function kirimPDFdenganPassword($chat_id, &$db) {
     $password = PDF_PASSWORD;
     
-    // Kirim file PDF (pake file_id yang udah dienkrip)
-    kirimFileId($chat_id, FULL_PDF_FILE_ID, "📄 *FULL PDF JAILBREAK*\n\n🔑 *Password:* `$password`\n\n⚠️ Password ini untuk semua pembeli.\n\n🎁 Bonus chat: /chat");
+    // Kirim file PDF ScriptMaster.pdf
+    kirimFileId($chat_id, FULL_PDF_FILE_ID, "📄 *SCRIPT MASTER PDF*\n\n🔑 *Password:* `$password`\n\n⚠️ Password ini untuk semua pembeli.\n\n🎁 Bonus chat: /chat");
     
     // Simpan transaksi
     $db['transactions'][] = [
@@ -194,7 +196,7 @@ function kirimPDFdenganPassword($chat_id, &$db) {
     
     saveDB($db);
     
-    kirimPesan(ADMIN_ID, "✅ PDF terkirim ke `$chat_id`\nPassword: `$password`");
+    kirimPesan(ADMIN_ID, "✅ ScriptMaster.pdf terkirim ke `$chat_id`\nPassword: `$password`");
     
     return ['success' => true, 'password' => $password];
 }
@@ -232,10 +234,26 @@ function sapaUser($chat_id, $nama, $username) {
 // ========== FUNGSI KATALOG ==========
 function tampilKatalog($chat_id) {
     kirimFileId($chat_id, PREVIEW_FILE_ID, "📄 *PREVIEW PDF (2 Halaman)*");
-    $text = "━━━━━━━━━━━\n📌 *AI JAILBREAK MEGA PACK*\nHarga: Rp 25.000\n"
-          . "Isi: Unlock Deepseek, Gemini, Kimi AI\n\n"
-          . "🎁 Bonus: 20x chat Gemini per pembelian\n\n"
-          . "Cara beli:\n1. Transfer ke Saweria\n2. Klik /beli\n3. Kirim bukti transfer";
+    $text = "━━━━━━━━━━━━━━━━━━━━━━━\n"
+          . "📌 *SCRIPT MASTER PACK*\n"
+          . "━━━━━━━━━━━━━━━━━━━━━━━\n"
+          . "Harga: Rp 25.000\n"
+          . "File: `ScriptMaster.pdf` (terenkripsi)\n"
+          . "Password: *GQ3A-J6G8-5235*\n"
+          . "Isi: Unlock Deepseek, Gemini, Kimi AI tanpa batasan\n\n"
+          . "━━━━━━━━━━━━━━━━━━━━━━━\n"
+          . "🎁 *BONUS PER PEMBELIAN:*\n"
+          . "• Akses *Gemini 2.5 Pro* via bot ini (20x chat)\n"
+          . "• Update metode jailbreak terbaru\n\n"
+          . "━━━━━━━━━━━━━━━━━━━━━━━\n"
+          . "Cara beli:\n"
+          . "1. Transfer Rp 25.000 ke Saweria:\n"
+          . "   " . SAWERIA_LINK . "\n"
+          . "2. Klik /beli\n"
+          . "3. Kirim BUKTI TRANSFER (screenshot) ke bot ini\n\n"
+          . "💡 *Password akan diberikan setelah konfirmasi admin*\n\n"
+          . "Langsung klik:\n"
+          . "/beli";
     kirimPesan($chat_id, $text);
 }
 
@@ -244,10 +262,17 @@ function prosesBeli($chat_id, $username, $nama, &$db) {
     $db['pending'][] = ['chat_id' => $chat_id, 'username' => $username, 'nama' => $nama, 'waktu' => time()];
     saveDB($db);
     
-    $text = "✅ *Pesanan diterima!*\n\nTransfer Rp25.000 ke:\n" . SAWERIA_LINK . "\n\n"
-          . "SETELAH TRANSFER, kirim BUKTI TRANSFER (screenshot) KE BOT INI.";
+    $text = "✅ *Pesanan diterima!*\n\n"
+          . "Produk: Script Master Pack\n"
+          . "Harga: Rp 25.000\n\n"
+          . "Silakan transfer ke:\n"
+          . SAWERIA_LINK . "\n\n"
+          . "**SETELAH TRANSFER**, kirim BUKTI TRANSFER (screenshot) KE BOT INI.\n\n"
+          . "Admin bakal verifikasi dan kirimkan password untuk membuka `ScriptMaster.pdf`.\n\n"
+          . "Bonus: Nanti dapet 20x chat Gemini gratis!";
+    
     kirimPesan($chat_id, $text);
-    kirimPesan(ADMIN_ID, "🔔 Order baru dari @$username\nChat ID: `$chat_id`");
+    kirimPesan(ADMIN_ID, "🔔 Order baru dari @$username\nChat ID: `$chat_id`\nProduk: Script Master Pack");
 }
 
 // ========== FUNGSI LUPA PASSWORD ==========
@@ -260,14 +285,14 @@ function kirimUlangPassword($chat_id, &$db) {
         }
     }
     if ($latest) {
-        kirimPesan($chat_id, "🔑 Password terakhir: `$latest`");
+        kirimPesan($chat_id, "🔑 Password terakhir: `$latest`\n\nFile: ScriptMaster.pdf");
         kirimPesan(ADMIN_ID, "🔔 User `$chat_id` minta password: `$latest`");
     } else {
         kirimPesan($chat_id, "❌ Belum pernah beli. Ketik /beli");
     }
 }
 
-// ========== FUNGSI GEMINI ==========
+// ========== FUNGSI GEMINI (FIXED) ==========
 function cekChatAccess($chat_id, $nama, &$db) {
     if (!isset($db['chats'][$chat_id])) {
         kirimPesan($chat_id, "❌ Beli dulu: /beli");
@@ -304,8 +329,25 @@ function handleChat($chat_id, $prompt, $nama, &$db) {
 }
 
 function callGemini($prompt) {
+    // FIX: Gunakan model yang benar dan API key dari environment
     $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=" . GEMINI_API_KEY;
-    $data = ['contents' => [['parts' => [['text' => $prompt]]]]];
+    
+    $data = [
+        'contents' => [
+            [
+                'parts' => [
+                    ['text' => $prompt]
+                ]
+            ]
+        ],
+        'generationConfig' => [
+            'temperature' => 0.9,
+            'topK' => 1,
+            'topP' => 1,
+            'maxOutputTokens' => 2048,
+        ]
+    ];
+    
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $url);
     curl_setopt($ch, CURLOPT_POST, true);
@@ -313,15 +355,32 @@ function callGemini($prompt) {
     curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // Tambahkan ini untuk menghindari SSL error
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+    
     $response = curl_exec($ch);
     $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $curl_error = curl_error($ch);
     curl_close($ch);
     
     if ($http_code != 200) {
-        return "⚠️ Error Gemini (HTTP $http_code)";
+        // Log error untuk debugging
+        error_log("Gemini API Error: HTTP $http_code - $curl_error");
+        return "⚠️ Error Gemini (HTTP $http_code). Silakan coba lagi nanti.";
     }
+    
+    if (!$response) {
+        return "⚠️ Error: Tidak ada respons dari Gemini.";
+    }
+    
     $result = json_decode($response, true);
-    return $result['candidates'][0]['content']['parts'][0]['text'] ?? "⚠️ Gemini gak bisa jawab.";
+    
+    if (isset($result['candidates'][0]['content']['parts'][0]['text'])) {
+        return $result['candidates'][0]['content']['parts'][0]['text'];
+    } else {
+        error_log("Gemini API Unexpected Response: " . print_r($result, true));
+        return "⚠️ Maaf, Gemini tidak bisa menjawab saat ini.";
+    }
 }
 
 function cekLimit($chat_id, &$db) {
@@ -330,7 +389,12 @@ function cekLimit($chat_id, &$db) {
         return;
     }
     $total = count(array_filter($db['transactions'], fn($t) => $t['chat_id'] == $chat_id));
-    kirimPesan($chat_id, "📊 Status:\nTotal beli: $total\nSisa chat: {$db['chats'][$chat_id]['remaining']}");
+    $used = 20 * $total - $db['chats'][$chat_id]['remaining'];
+    kirimPesan($chat_id, "📊 *Status Chat:*\n"
+                       . "Total pembelian: $total kali\n"
+                       . "Total bonus: " . (20 * $total) . " chat\n"
+                       . "Sudah dipakai: $used\n"
+                       . "Sisa chat: {$db['chats'][$chat_id]['remaining']}");
 }
 
 // ========== FUNGSI KIRIM PESAN ==========

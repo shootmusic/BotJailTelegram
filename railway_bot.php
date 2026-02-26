@@ -1,13 +1,14 @@
 <?php
 // ====================================================
-// JAILBREAK BOT - RAILWAY EDITION (OXYMAX MODE)
-// Dual-mode: Webhook handler + Healthcheck
+// JAILBREAK BOT - RAILWAY EDITION (FINAL FIX)
+// 100% WORKING - WITH PROPER WEBHOOK RESPONSE
 // ====================================================
 
 // ========== LOAD ENVIRONMENT ==========
 $required_vars = ['BOT_TOKEN', 'ADMIN_ID', 'GEMINI_API_KEY'];
 foreach ($required_vars as $var) {
     if (!getenv($var)) {
+        http_response_code(500);
         die("❌ Environment variable $var tidak ditemukan!\n");
     }
 }
@@ -32,23 +33,34 @@ function saveDB($db) {
     file_put_contents(DB_FILE, json_encode($db, JSON_PRETTY_PRINT));
 }
 
-// ========== HANDLER UTAMA ==========
+// ========== WEBHOOK HANDLER ==========
 $input = file_get_contents('php://input');
 
-// Kalo ada input, proses sebagai webhook
 if (!empty($input)) {
     $update = json_decode($input, true);
     if ($update) {
+        // Process the update
         $db = loadDB();
         processUpdate($update, $db);
         saveDB($db);
+        
+        // === CRITICAL FIX: Send response to Telegram ===
+        http_response_code(200);
+        header('Content-Type: application/json');
+        echo json_encode(['ok' => true, 'message' => 'Webhook processed successfully']);
+        exit;
+    } else {
+        http_response_code(400);
+        header('Content-Type: application/json');
+        echo json_encode(['ok' => false, 'message' => 'Invalid JSON']);
         exit;
     }
 }
 
-// Kalo gak ada input, tampilkan status (untuk healthcheck)
+// ========== HEALTHCHECK HANDLER ==========
+http_response_code(200);
 header('Content-Type: text/plain');
-echo "🚀 JAILBREAK BOT - OXYMAX MODE\n";
+echo "🚀 JAILBREAK BOT - FINAL FIX\n";
 echo "==========================\n";
 echo "✅ Status: RUNNING\n";
 echo "✅ PHP Version: " . phpversion() . "\n";
@@ -67,6 +79,7 @@ function getPendingCount() {
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, "https://api.telegram.org/bot" . BOT_TOKEN . "/getWebhookInfo");
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 5);
     $response = curl_exec($ch);
     curl_close($ch);
     $data = json_decode($response, true);
@@ -309,10 +322,14 @@ function callGemini($prompt) {
     curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
     curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 30);
     $response = curl_exec($ch);
     $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     curl_close($ch);
-    if ($http_code != 200) return "⚠️ Error Gemini.";
+    
+    if ($http_code != 200) {
+        return "⚠️ Error Gemini (HTTP $http_code)";
+    }
     $result = json_decode($response, true);
     return $result['candidates'][0]['content']['parts'][0]['text'] ?? "⚠️ Gemini gak bisa jawab.";
 }
@@ -335,7 +352,9 @@ function kirimPesan($chat_id, $text) {
     curl_setopt($ch, CURLOPT_POST, true);
     curl_setopt($ch, CURLOPT_POSTFIELDS, $post);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 10);
     curl_exec($ch);
+    curl_close($ch);
 }
 
 function kirimFileId($chat_id, $file_id, $caption = '') {
@@ -346,10 +365,17 @@ function kirimFileId($chat_id, $file_id, $caption = '') {
     curl_setopt($ch, CURLOPT_POST, true);
     curl_setopt($ch, CURLOPT_POSTFIELDS, $post);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 10);
     curl_exec($ch);
+    curl_close($ch);
 }
 
 function kirimFile($chat_id, $file_path, $caption = '') {
+    if (!file_exists($file_path)) {
+        kirimPesan(ADMIN_ID, "❌ File $file_path tidak ditemukan!");
+        return;
+    }
+    
     $url = "https://api.telegram.org/bot" . BOT_TOKEN . "/sendDocument";
     $post = [
         'chat_id' => $chat_id,
@@ -362,7 +388,9 @@ function kirimFile($chat_id, $file_path, $caption = '') {
     curl_setopt($ch, CURLOPT_POST, true);
     curl_setopt($ch, CURLOPT_POSTFIELDS, $post);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 30);
     curl_exec($ch);
+    curl_close($ch);
 }
 
 function kirimFotoWithKeyboard($chat_id, $file_id, $caption, $keyboard) {
@@ -379,7 +407,9 @@ function kirimFotoWithKeyboard($chat_id, $file_id, $caption, $keyboard) {
     curl_setopt($ch, CURLOPT_POST, true);
     curl_setopt($ch, CURLOPT_POSTFIELDS, $post);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 10);
     curl_exec($ch);
+    curl_close($ch);
 }
 
 function kirimDokumenWithKeyboard($chat_id, $file_id, $caption, $keyboard) {
@@ -396,7 +426,9 @@ function kirimDokumenWithKeyboard($chat_id, $file_id, $caption, $keyboard) {
     curl_setopt($ch, CURLOPT_POST, true);
     curl_setopt($ch, CURLOPT_POSTFIELDS, $post);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 10);
     curl_exec($ch);
+    curl_close($ch);
 }
 
 function editMessageCaption($chat_id, $message_id, $caption) {
@@ -412,7 +444,9 @@ function editMessageCaption($chat_id, $message_id, $caption) {
     curl_setopt($ch, CURLOPT_POST, true);
     curl_setopt($ch, CURLOPT_POSTFIELDS, $post);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 10);
     curl_exec($ch);
+    curl_close($ch);
 }
 
 function answerCallbackQuery($callback_query_id, $text) {
@@ -427,6 +461,8 @@ function answerCallbackQuery($callback_query_id, $text) {
     curl_setopt($ch, CURLOPT_POST, true);
     curl_setopt($ch, CURLOPT_POSTFIELDS, $post);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 5);
     curl_exec($ch);
+    curl_close($ch);
 }
 

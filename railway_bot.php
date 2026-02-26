@@ -1,54 +1,80 @@
 <?php
 // ====================================================
-// JAILBREAK BOT - RAILWAY EDITION (FIXED VERSION)
-// PHP 8.1+ Compatible with Built-in Server
-// Repo: https://github.com/shootmusic/BotJailTelegram
-// SEMUA SENSITIVE DATA DIAMBIL DARI ENVIRONMENT VARIABLE
+// JAILBREAK BOT - RAILWAY EDITION (OXYMAX MODE)
+// Dual-mode: Webhook handler + Healthcheck
 // ====================================================
 
-// ========== HANDLE WEBHOOK ==========
-// Baca input dari Telegram (ini selalu ada kalo webhook)
+// ========== LOAD ENVIRONMENT ==========
+$required_vars = ['BOT_TOKEN', 'ADMIN_ID', 'GEMINI_API_KEY'];
+foreach ($required_vars as $var) {
+    if (!getenv($var)) {
+        die("❌ Environment variable $var tidak ditemukan!\n");
+    }
+}
+
+define('BOT_TOKEN', getenv('BOT_TOKEN'));
+define('ADMIN_ID', getenv('ADMIN_ID'));
+define('GEMINI_API_KEY', getenv('GEMINI_API_KEY'));
+define('SAWERIA_LINK', getenv('SAWERIA_LINK') ?: 'https://saweria.co/Kikomaukiko');
+define('MASTER_PDF_ID', '1dK2tqUMK5WMGNPevoWipadd3y1c_XWn1');
+define('PREVIEW_FILE_ID', 'BQACAgUAAxkBAANQaZ8AAcdi8rwd5JLrKVvV1x-h_vVrAAKXGwACR4b5VLZWFuSlBdUIOgQ');
+define('DB_FILE', 'database.json');
+
+// ========== DATABASE ==========
+function loadDB() {
+    if (file_exists(DB_FILE)) {
+        return json_decode(file_get_contents(DB_FILE), true);
+    }
+    return ['transactions' => [], 'pending' => [], 'chats' => []];
+}
+
+function saveDB($db) {
+    file_put_contents(DB_FILE, json_encode($db, JSON_PRETTY_PRINT));
+}
+
+// ========== HANDLER UTAMA ==========
 $input = file_get_contents('php://input');
 
-// Kalo ada input, berarti ini webhook dari Telegram
-if ($input) {
+// Kalo ada input, proses sebagai webhook
+if (!empty($input)) {
     $update = json_decode($input, true);
     if ($update) {
-        // Proses update
-        define('BOT_TOKEN', getenv('BOT_TOKEN') ?: die('❌ BOT_TOKEN tidak ditemukan'));
-        define('ADMIN_ID', getenv('ADMIN_ID') ?: die('❌ ADMIN_ID tidak ditemukan'));
-        define('GEMINI_API_KEY', getenv('GEMINI_API_KEY') ?: die('❌ GEMINI_API_KEY tidak ditemukan'));
-        define('SAWERIA_LINK', getenv('SAWERIA_LINK') ?: 'https://saweria.co/Kikomaukiko');
-        define('MASTER_PDF_ID', '1dK2tqUMK5WMGNPevoWipadd3y1c_XWn1');
-        define('PREVIEW_FILE_ID', 'BQACAgUAAxkBAANQaZ8AAcdi8rwd5JLrKVvV1x-h_vVrAAKXGwACR4b5VLZWFuSlBdUIOgQ');
-        define('DB_FILE', 'database.json');
-        
-        // Load database
-        $db = file_exists(DB_FILE) ? json_decode(file_get_contents(DB_FILE), true) : [
-            'transactions' => [],
-            'pending' => [],
-            'chats' => []
-        ];
-        
-        // Proses update
+        $db = loadDB();
         processUpdate($update, $db);
+        saveDB($db);
         exit;
     }
 }
 
-// ========== HANDLE HEALTHCHECK / ROOT ACCESS ==========
-// Kalo gak ada input, berarti ini akses root (healthcheck)
+// Kalo gak ada input, tampilkan status (untuk healthcheck)
 header('Content-Type: text/plain');
-echo "✅ BOT IS RUNNING!\n";
-echo "PHP Version: " . phpversion() . "\n";
-echo "Time: " . date('Y-m-d H:i:s') . "\n";
-echo "Environment: " . (getenv('RAILWAY_ENVIRONMENT') ?: 'production') . "\n";
-echo "Webhook URL: https://botjailtelegram.up.railway.app\n";
+echo "🚀 JAILBREAK BOT - OXYMAX MODE\n";
+echo "==========================\n";
+echo "✅ Status: RUNNING\n";
+echo "✅ PHP Version: " . phpversion() . "\n";
+echo "✅ Bot Token: " . substr(BOT_TOKEN, 0, 15) . "...\n";
+echo "✅ Admin ID: " . ADMIN_ID . "\n";
+echo "✅ Gemini API: " . substr(GEMINI_API_KEY, 0, 10) . "...\n";
+echo "✅ Time: " . date('Y-m-d H:i:s') . "\n";
+echo "✅ Environment: " . (getenv('RAILWAY_ENVIRONMENT') ?: 'production') . "\n";
+echo "==========================\n";
+echo "📡 Webhook URL: https://botjailtelegram.up.railway.app\n";
+echo "📦 Pending updates: " . getPendingCount() . "\n";
 exit(0);
 
-// ========== FUNGSI UTAMA (DIPINDAHKAN KE SINI) ==========
+// ========== FUNGSI GET PENDING COUNT ==========
+function getPendingCount() {
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, "https://api.telegram.org/bot" . BOT_TOKEN . "/getWebhookInfo");
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    $response = curl_exec($ch);
+    curl_close($ch);
+    $data = json_decode($response, true);
+    return $data['result']['pending_update_count'] ?? 'unknown';
+}
+
+// ========== FUNGSI UPDATE HANDLER ==========
 function processUpdate($update, &$db) {
-    // Callback query (tombol)
     if (isset($update['callback_query'])) {
         handleCallbackQuery($update['callback_query'], $db);
         return;
@@ -62,19 +88,17 @@ function processUpdate($update, &$db) {
     $username = $msg['from']['username'] ?? 'user_' . $chat_id;
     $nama = $msg['from']['first_name'] ?? 'Sob';
     
-    // Handle foto / dokumen (bukti transfer)
     if (isset($msg['photo']) || isset($msg['document'])) {
         handlePaymentProof($chat_id, $msg, $username, $nama, $db);
         return;
     }
     
-    // Command handler
     switch ($text) {
         case '/start':
-            sapaUser($chat_id, $nama, $username, $db);
+            sapaUser($chat_id, $nama, $username);
             break;
         case '/katalog':
-            tampilKatalog($chat_id, $db);
+            tampilKatalog($chat_id);
             break;
         case '/beli':
             prosesBeli($chat_id, $username, $nama, $db);
@@ -96,11 +120,7 @@ function processUpdate($update, &$db) {
     }
 }
 
-function saveDB($db) {
-    file_put_contents(DB_FILE, json_encode($db, JSON_PRETTY_PRINT));
-}
-
-// ========== CALLBACK QUERY (TOMBOL KONFIRMASI) ==========
+// ========== FUNGSI CALLBACK ==========
 function handleCallbackQuery($callback, &$db) {
     $data = $callback['data'];
     $chat_id = $callback['message']['chat']['id'];
@@ -114,39 +134,31 @@ function handleCallbackQuery($callback, &$db) {
     
     if (strpos($data, 'confirm_') === 0) {
         $user_chat_id = str_replace('confirm_', '', $data);
-        
-        // KIRIM PDF DENGAN PASSWORD BARU (SINKRON)
         kirimPDFdenganPassword($user_chat_id, $db);
         
-        // Update pesan admin
         $new_caption = $callback['message']['caption'] . "\n\n✅ *SUDAH DIKONFIRMASI*";
         editMessageCaption($chat_id, $message_id, $new_caption);
-        
         answerCallbackQuery($callback['id'], "✅ PDF udah dikirim dengan password baru!");
     }
 }
 
-// ========== FUNGSI KIRIM PDF DENGAN PASSWORD ==========
+// ========== FUNGSI KIRIM PDF ==========
 function kirimPDFdenganPassword($chat_id, &$db) {
-    
-    // 1. Generate password random
     $part1 = strtoupper(substr(md5(uniqid() . $chat_id . rand()), 0, 4));
     $part2 = strtoupper(substr(md5(uniqid() . time() . rand()), 0, 4));
     $part3 = rand(1000, 9999);
     $password = $part1 . '-' . $part2 . '-' . $part3;
     
-    // 2. Download file dari Google Drive pake gdown
     $master_file = 'master_' . $chat_id . '_' . time() . '.pdf';
     $download_cmd = "gdown https://drive.google.com/uc?id=" . MASTER_PDF_ID . " -O " . $master_file . " 2>&1";
     exec($download_cmd, $dl_output, $dl_return);
     
     if ($dl_return !== 0) {
-        kirimPesan(ADMIN_ID, "❌ Gagal download dari Drive: " . implode("\n", $dl_output));
-        kirimPesan($chat_id, "⚠️ Maaf, sistem error. Admin akan hubungi.");
+        kirimPesan(ADMIN_ID, "❌ Gagal download: " . implode("\n", $dl_output));
+        kirimPesan($chat_id, "⚠️ Error, hubungi admin.");
         return;
     }
     
-    // 3. Enkrip file dengan password yang baru
     $encrypted_file = 'enc_' . $chat_id . '_' . time() . '.pdf';
     $encrypt_cmd = "qpdf --encrypt user-password={$password} owner-password={$password} 256 -- "
                  . escapeshellarg($master_file) . " "
@@ -155,74 +167,42 @@ function kirimPDFdenganPassword($chat_id, &$db) {
     exec($encrypt_cmd, $enc_output, $enc_return);
     
     if ($enc_return !== 0) {
-        kirimPesan(ADMIN_ID, "❌ Gagal encrypt PDF: " . implode("\n", $enc_output));
-        kirimPesan($chat_id, "⚠️ Maaf, sistem error. Admin akan hubungi.");
+        kirimPesan(ADMIN_ID, "❌ Gagal encrypt: " . implode("\n", $enc_output));
         unlink($master_file);
         return;
     }
     
-    // 4. Kirim file ke user
-    $caption = "📄 *FULL PDF JAILBREAK*\n\n"
-             . "🔑 *Password:* `$password`\n\n"
-             . "⚠️ Password ini SINKRON 100% dengan file PDF.\n"
-             . "Gunakan password di atas untuk membuka file.\n\n"
-             . "🎁 Bonus chat: /chat (sisa " . (isset($db['chats'][$chat_id]['remaining']) ? $db['chats'][$chat_id]['remaining'] + 20 : 20) . ")";
-    
+    $caption = "📄 *FULL PDF JAILBREAK*\n\n🔑 *Password:* `$password`\n\n⚠️ Password sinkron 100%.";
     kirimFile($chat_id, $encrypted_file, $caption);
     
-    // 5. Simpan ke database
     $db['transactions'][] = [
         'chat_id' => $chat_id,
         'password' => $password,
-        'file' => $encrypted_file,
         'waktu' => time(),
         'bonus_chat' => 20
     ];
     
-    // Update bonus chat
     if (!isset($db['chats'][$chat_id])) {
-        $db['chats'][$chat_id] = [
-            'history' => [],
-            'remaining' => 20,
-            'mode' => 'idle'
-        ];
+        $db['chats'][$chat_id] = ['remaining' => 20, 'mode' => 'idle', 'history' => []];
     } else {
         $db['chats'][$chat_id]['remaining'] += 20;
     }
     
     // Hapus dari pending
-    $new_pending = [];
-    foreach ($db['pending'] as $p) {
-        if ($p['chat_id'] != $chat_id) {
-            $new_pending[] = $p;
-        }
-    }
-    $db['pending'] = $new_pending;
+    $db['pending'] = array_filter($db['pending'], fn($p) => $p['chat_id'] != $chat_id);
     
-    saveDB($db);
-    
-    // Hapus file sementara
     unlink($master_file);
     unlink($encrypted_file);
-    
-    // Notifikasi admin
-    kirimPesan(ADMIN_ID, "✅ PDF udah dikirim ke user `$chat_id`\nPassword: `$password`");
+    kirimPesan(ADMIN_ID, "✅ PDF terkirim ke `$chat_id`\nPassword: `$password`");
 }
 
-// ========== FUNGSI HANDLE BUKTI TRANSFER ==========
+// ========== FUNGSI PAYMENT PROOF ==========
 function handlePaymentProof($chat_id, $msg, $username, $nama, &$db) {
-    
-    $caption = "🔔 *BUKTI TRANSFER DARI USER*\n\n"
-             . "Nama: $nama\n"
-             . "Username: @$username\n"
-             . "Chat ID: `$chat_id`\n"
-             . "Waktu: " . date('d/m/Y H:i:s');
+    $caption = "🔔 *BUKTI TRANSFER*\n\nNama: $nama\nUsername: @$username\nChat ID: `$chat_id`\nWaktu: " . date('d/m/Y H:i:s');
     
     $keyboard = [
         'inline_keyboard' => [
-            [
-                ['text' => '✅ KONFIRMASI', 'callback_data' => 'confirm_' . $chat_id]
-            ]
+            [['text' => '✅ KONFIRMASI', 'callback_data' => 'confirm_' . $chat_id]]
         ]
     ];
     
@@ -234,124 +214,69 @@ function handlePaymentProof($chat_id, $msg, $username, $nama, &$db) {
         kirimDokumenWithKeyboard(ADMIN_ID, $file_id, $caption, $keyboard);
     }
     
-    kirimPesan($chat_id, "✅ *Bukti transfer diterima!*\n\nAdmin akan konfirmasi segera.");
+    kirimPesan($chat_id, "✅ Bukti diterima! Admin akan konfirmasi.");
 }
 
 // ========== FUNGSI SAPA USER ==========
-function sapaUser($chat_id, $nama, $username, &$db) {
-    $text = "Halo *$nama*! 😂😂\n"
-          . "Selamat datang di *JAILBREAK SCRIPT MARKET*\n\n"
-          . "Gue jual script² jailbreak premium buat unlock AI tanpa batasan.\n\n"
-          . "📌 *FITUR:*\n"
-          . "• /katalog - Lihat produk\n"
-          . "• /beli - Beli produk (bisa berkali-kali!)\n"
-          . "• /chat - Chat dengan Gemini (20x per pembelian)\n"
-          . "• /lupapassword - Kirim ulang password terakhir\n\n"
-          . "Username lu: $username\n"
-          . "Chat ID: `$chat_id`\n\n"
-          . "💰 *Cara Bayar:*\n"
-          . "Transfer ke Saweria: " . SAWERIA_LINK . "\n"
-          . "Kirim bukti transfer ke bot ini ya!";
-    
+function sapaUser($chat_id, $nama, $username) {
+    $text = "Halo *$nama*! 😂\nSelamat datang di *JAILBREAK STORE*\n\n"
+          . "Fitur:\n• /katalog\n• /beli\n• /chat\n• /lupapassword\n\n"
+          . "Username: $username\nChat ID: `$chat_id`\n\n"
+          . "💰 Transfer ke: " . SAWERIA_LINK;
     kirimPesan($chat_id, $text);
 }
 
 // ========== FUNGSI KATALOG ==========
-function tampilKatalog($chat_id, &$db) {
-    kirimFileId($chat_id, PREVIEW_FILE_ID, "📄 *PREVIEW PDF (2 Halaman Pertama)*\n\nIni contoh isinya.");
-    
-    $text = "━━━━━━━━━━━━━━━━\n"
-          . "📌 *AI JAILBREAK MEGA PACK*\n"
-          . "Harga: Rp 25.000\n"
-          . "Isi: Full script & metode unlock Deepseek, Gemini, Kimi AI tanpa batasan\n\n"
-          . "━━━━━━━━━━━━━━━━\n"
-          . "🎁 *BONUS PER PEMBELIAN:*\n"
-          . "• Akses *Gemini 2.5 Pro* via bot ini (20x chat)\n"
-          . "• Update metode jailbreak terbaru\n\n"
-          . "━━━━━━━━━━━━━━━━\n"
-          . "Cara beli:\n"
-          . "1. Transfer Rp 25.000 ke Saweria:\n"
-          . "   " . SAWERIA_LINK . "\n"
-          . "2. Klik /beli\n"
-          . "3. Kirim BUKTI TRANSFER (screenshot) ke bot ini\n"
-          . "4. Admin verifikasi, dapet PDF + password\n\n"
-          . "💡 *Bisa beli berkali-kali! Password berbeda tiap pembelian*\n\n"
-          . "Langsung klik:\n"
-          . "/beli";
-    
+function tampilKatalog($chat_id) {
+    kirimFileId($chat_id, PREVIEW_FILE_ID, "📄 *PREVIEW PDF (2 Halaman)*");
+    $text = "━━━━━━━━━━━\n📌 *AI JAILBREAK MEGA PACK*\nHarga: Rp 25.000\n"
+          . "Isi: Unlock Deepseek, Gemini, Kimi AI\n\n"
+          . "🎁 Bonus: 20x chat Gemini per pembelian\n\n"
+          . "Cara beli:\n1. Transfer ke Saweria\n2. Klik /beli\n3. Kirim bukti transfer";
     kirimPesan($chat_id, $text);
 }
 
 // ========== FUNGSI PROSES BELI ==========
 function prosesBeli($chat_id, $username, $nama, &$db) {
-    
-    $db['pending'][] = [
-        'chat_id' => $chat_id,
-        'username' => $username,
-        'nama' => $nama,
-        'waktu' => time()
-    ];
+    $db['pending'][] = ['chat_id' => $chat_id, 'username' => $username, 'nama' => $nama, 'waktu' => time()];
     saveDB($db);
     
-    $text = "✅ *Pesanan diterima!*\n\n"
-          . "Produk: AI Jailbreak Mega Pack\n"
-          . "Harga: Rp 25.000\n\n"
-          . "Silakan transfer ke:\n"
-          . SAWERIA_LINK . "\n\n"
-          . "**SETELAH TRANSFER**, kirim BUKTI TRANSFER (screenshot) KE BOT INI.\n\n"
-          . "Admin bakal verifikasi dan kirimkan FILE PDF dengan PASSWORD UNIK.\n\n"
-          . "💡 *Password akan SINKRON 100% dengan file yang dikirim!*";
-    
+    $text = "✅ *Pesanan diterima!*\n\nTransfer Rp25.000 ke:\n" . SAWERIA_LINK . "\n\n"
+          . "SETELAH TRANSFER, kirim BUKTI TRANSFER (screenshot) KE BOT INI.";
     kirimPesan($chat_id, $text);
-    
-    $notif = "🔔 *ORDER BARU*\n"
-           . "User: @$username ($nama)\n"
-           . "Chat ID: `$chat_id`\n"
-           . "Waktu: " . date('d/m H:i') . "\n\n"
-           . "Tunggu user kirim bukti transfer.";
-    
-    kirimPesan(ADMIN_ID, $notif);
+    kirimPesan(ADMIN_ID, "🔔 Order baru dari @$username\nChat ID: `$chat_id`");
 }
 
 // ========== FUNGSI LUPA PASSWORD ==========
 function kirimUlangPassword($chat_id, &$db) {
-    
-    $found = false;
-    $latest_password = '';
-    $latest_time = 0;
-    
-    foreach ($db['transactions'] as $trans) {
-        if ($trans['chat_id'] == $chat_id && $trans['waktu'] > $latest_time) {
-            $latest_time = $trans['waktu'];
-            $latest_password = $trans['password'];
-            $found = true;
+    $latest = null;
+    foreach (array_reverse($db['transactions']) as $t) {
+        if ($t['chat_id'] == $chat_id) {
+            $latest = $t['password'];
+            break;
         }
     }
-    
-    if ($found) {
-        kirimPesan($chat_id, "🔑 *Password terakhir lo:* `$latest_password`\n\n"
-                           . "Coba buka PDF pake password itu.\n\n"
-                           . "Kalo file PDF-nya ilang, lo harus beli lagi ya.");
-        kirimPesan(ADMIN_ID, "🔔 User `$chat_id` minta password lagi: `$latest_password`");
+    if ($latest) {
+        kirimPesan($chat_id, "🔑 Password terakhir: `$latest`");
+        kirimPesan(ADMIN_ID, "🔔 User `$chat_id` minta password: `$latest`");
     } else {
-        kirimPesan($chat_id, "❌ Lo belum pernah beli. Ketik /beli dulu.");
+        kirimPesan($chat_id, "❌ Belum pernah beli. Ketik /beli");
     }
 }
 
 // ========== FUNGSI GEMINI ==========
 function cekChatAccess($chat_id, $nama, &$db) {
     if (!isset($db['chats'][$chat_id])) {
-        kirimPesan($chat_id, "❌ Lo belum punya akses chat. Beli dulu: /beli");
+        kirimPesan($chat_id, "❌ Beli dulu: /beli");
         return;
     }
-    $remaining = $db['chats'][$chat_id]['remaining'];
-    if ($remaining <= 0) {
-        kirimPesan($chat_id, "⚠️ Bonus chat lo udah habis. Beli lagi: /beli");
+    if ($db['chats'][$chat_id]['remaining'] <= 0) {
+        kirimPesan($chat_id, "⚠️ Bonus habis. Beli lagi: /beli");
         return;
     }
     $db['chats'][$chat_id]['mode'] = 'chat';
     saveDB($db);
-    kirimPesan($chat_id, "🤖 Mode chat aktif! Sisa: $remaining\nKetik /stop buat keluar.");
+    kirimPesan($chat_id, "🤖 Mode chat aktif! Sisa: {$db['chats'][$chat_id]['remaining']}\nKetik /stop");
 }
 
 function handleChat($chat_id, $prompt, $nama, &$db) {
@@ -364,7 +289,7 @@ function handleChat($chat_id, $prompt, $nama, &$db) {
     if ($db['chats'][$chat_id]['remaining'] <= 0) {
         $db['chats'][$chat_id]['mode'] = 'idle';
         saveDB($db);
-        kirimPesan($chat_id, "⚠️ Bonus chat habis. Beli lagi: /beli");
+        kirimPesan($chat_id, "⚠️ Bonus habis. Beli lagi: /beli");
         return;
     }
     $db['chats'][$chat_id]['remaining']--;
@@ -387,22 +312,18 @@ function callGemini($prompt) {
     $response = curl_exec($ch);
     $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     curl_close($ch);
-    if ($http_code != 200) return "⚠️ Error: Gak bisa connect ke Gemini.";
+    if ($http_code != 200) return "⚠️ Error Gemini.";
     $result = json_decode($response, true);
-    return $result['candidates'][0]['content']['parts'][0]['text'] ?? "⚠️ Maaf, Gemini gak bisa jawab.";
+    return $result['candidates'][0]['content']['parts'][0]['text'] ?? "⚠️ Gemini gak bisa jawab.";
 }
 
 function cekLimit($chat_id, &$db) {
     if (!isset($db['chats'][$chat_id])) {
-        kirimPesan($chat_id, "Lo belum punya akses chat. Beli dulu: /beli");
+        kirimPesan($chat_id, "Belum punya akses chat. Beli dulu: /beli");
         return;
     }
-    $remaining = $db['chats'][$chat_id]['remaining'];
-    $total = 0;
-    foreach ($db['transactions'] as $t) {
-        if ($t['chat_id'] == $chat_id) $total++;
-    }
-    kirimPesan($chat_id, "📊 *Status Chat:*\nTotal beli: $total kali\nSisa chat: $remaining\nTotal bonus: " . ($total * 20));
+    $total = count(array_filter($db['transactions'], fn($t) => $t['chat_id'] == $chat_id));
+    kirimPesan($chat_id, "📊 Status:\nTotal beli: $total\nSisa chat: {$db['chats'][$chat_id]['remaining']}");
 }
 
 // ========== FUNGSI KIRIM PESAN ==========

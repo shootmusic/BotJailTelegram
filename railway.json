@@ -6,6 +6,6 @@
     "startCommand": "php -S 0.0.0.0:$PORT railway_bot.php",
     "restartPolicyType": "ON_FAILURE",
     "healthcheckPath": "/",
-    "healthcheckTimeout": 100
+    "healthcheckTimeout": 300
   }
 }

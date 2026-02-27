@@ -1,13 +1,24 @@
 <?php
 // ====================================================
-// JAILBREAK BOT - KALI LINUX EDITION v4
-// GEMINI 2.5 SERIES - FULLY WORKING
+// JAILBREAK BOT - KALI LINUX EDITION v5
+// AMAN - API KEY DARI ENVIRONMENT VARIABLE
+// GEMINI 2.5 SERIES
 // ====================================================
 
-define('BOT_TOKEN', '8045718722:AAGfUipGjliHIqB0zJ9Y7y0JUCyQ8eYGyps');
-define('ADMIN_ID', '7710155531');
-define('GEMINI_API_KEY', 'GET_FROM_ENV'); // API KEY BARU
-define('SAWERIA_LINK', 'https://saweria.co/Kikomaukiko');
+// ========== AMBIL KONFIGURASI DARI ENVIRONMENT ==========
+// JANGAN PERNAH HARDCODE API KEY DI SINI!
+$required_vars = ['BOT_TOKEN', 'ADMIN_ID', 'GEMINI_API_KEY'];
+foreach ($required_vars as $var) {
+    if (!getenv($var)) {
+        http_response_code(500);
+        die("❌ Environment variable $var tidak ditemukan!\n");
+    }
+}
+
+define('BOT_TOKEN', getenv('BOT_TOKEN'));
+define('ADMIN_ID', getenv('ADMIN_ID'));
+define('GEMINI_API_KEY', getenv('GEMINI_API_KEY'));
+define('SAWERIA_LINK', getenv('SAWERIA_LINK') ?: 'https://saweria.co/Kikomaukiko');
 define('PREVIEW_FILE_ID', 'BQACAgUAAxkBAANQaZ8AAcdi8rwd5JLrKVvV1x-h_vVrAAKXGwACR4b5VLZWFuSlBdUIOgQ');
 define('FULL_PDF_FILE_ID', 'BQACAgUAAxkDAAIBQWmgFiL1zVp9BTcqBq1o4GHYYSUmAALEHAAC6xYAAVXigx0pjSHNNToE');
 define('PDF_PASSWORD', 'GQ3A-J6G8-5235');
@@ -19,13 +30,14 @@ error_log("🚀 BOT STARTED at " . date('Y-m-d H:i:s'));
 
 // ========== MODEL GEMINI 2.5 SERIES ==========
 $GEMINI_MODELS = [
-    'gemini-2.5-flash',           // #1 Pilihan utama
-    'gemini-flash-latest',         // #2 Latest flash
-    'gemini-2.0-flash',            // #3 Legacy stabil
-    'gemini-2.5-pro',              // #4 Premium (cadangan)
-    'gemini-2.5-flash-lite'        // #5 Irit token
+    'gemini-2.5-flash',
+    'gemini-flash-latest',
+    'gemini-2.0-flash',
+    'gemini-2.5-pro',
+    'gemini-2.5-flash-lite'
 ];
 
+// ========== DATABASE ==========
 function loadDB() {
     if (file_exists(DB_FILE)) {
         return json_decode(file_get_contents(DB_FILE), true);
@@ -37,38 +49,45 @@ function saveDB($db) {
     file_put_contents(DB_FILE, json_encode($db, JSON_PRETTY_PRINT));
 }
 
+// ========== WEBHOOK HANDLER ==========
 $input = file_get_contents('php://input');
+
 if (!empty($input)) {
     $update = json_decode($input, true);
     if ($update) {
         $db = loadDB();
         processUpdate($update, $db);
         saveDB($db);
+        
         http_response_code(200);
         header('Content-Type: application/json');
-        echo json_encode(['ok' => true]);
+        echo json_encode(['ok' => true, 'message' => 'Webhook processed']);
         exit;
     }
 }
 
+// ========== HEALTHCHECK HANDLER ==========
 http_response_code(200);
 header('Content-Type: text/plain');
-echo "🚀 JAILBREAK BOT - GEMINI 2.5 ACTIVE\n";
-echo "====================================\n";
+echo "🚀 JAILBREAK BOT - SECURE EDITION\n";
+echo "================================\n";
 echo "✅ Status: RUNNING\n";
 echo "✅ PHP Version: " . phpversion() . "\n";
-echo "✅ Gemini API: GEMINI 2.5 SERIES\n";
+echo "✅ Bot Token: " . substr(BOT_TOKEN, 0, 15) . "...\n";
+echo "✅ Admin ID: " . ADMIN_ID . "\n";
 echo "✅ File: ScriptMaster.pdf\n";
 echo "✅ QRIS: TERPASANG\n";
 echo "✅ Time: " . date('Y-m-d H:i:s') . "\n";
-echo "====================================\n";
+echo "================================\n";
 exit(0);
 
+// ========== FUNGSI UPDATE HANDLER ==========
 function processUpdate($update, &$db) {
     if (isset($update['callback_query'])) {
         handleCallbackQuery($update['callback_query'], $db);
         return;
     }
+    
     if (!isset($update['message'])) return;
     
     $msg = $update['message'];
@@ -109,6 +128,7 @@ function processUpdate($update, &$db) {
     }
 }
 
+// ========== FUNGSI CALLBACK ==========
 function handleCallbackQuery($callback, &$db) {
     $data = $callback['data'];
     $chat_id = $callback['message']['chat']['id'];
@@ -140,10 +160,10 @@ function handleCallbackQuery($callback, &$db) {
     }
 }
 
-// ========== GEMINI 2.5 FLASH (PASTI WORK) ==========
+// ========== GEMINI 2.5 FLASH (PAKAI ENV VARIABLE) ==========
 function callGemini($prompt) {
     global $GEMINI_MODELS;
-    $api_key = GEMINI_API_KEY;
+    $api_key = GEMINI_API_KEY; // AMAN! Diambil dari environment
     
     foreach ($GEMINI_MODELS as $model) {
         error_log("🔄 Mencoba model: $model");
@@ -174,18 +194,15 @@ function callGemini($prompt) {
         if ($http_code == 200) {
             $result = json_decode($response, true);
             if (isset($result['candidates'][0]['content']['parts'][0]['text'])) {
-                error_log("✅ Gemini sukses dengan model: $model");
                 return $result['candidates'][0]['content']['parts'][0]['text'];
             }
-        } else {
-            error_log("⚠️ Model $model gagal: HTTP $http_code");
         }
     }
     
     return "⚠️ Maaf, layanan sedang sibuk. Coba lagi nanti.";
 }
 
-// ========== FUNGSI LAINNYA (SINGKAT) ==========
+// ========== FUNGSI KIRIM GAMBAR ==========
 function kirimGambarId($chat_id, $file_id, $caption = '') {
     $url = "https://api.telegram.org/bot" . BOT_TOKEN . "/sendPhoto";
     $post = ['chat_id' => $chat_id, 'photo' => $file_id, 'caption' => $caption, 'parse_mode' => 'Markdown'];
@@ -199,6 +216,7 @@ function kirimGambarId($chat_id, $file_id, $caption = '') {
     curl_close($ch);
 }
 
+// ========== FUNGSI KIRIM PASSWORD ==========
 function kirimPassword($chat_id, &$db) {
     $caption = "📄 *SCRIPT MASTER PDF*\n\n🔑 *Password:* `" . PDF_PASSWORD . "`\n\n🎁 Bonus chat: /chat\n\n📌 Convert: " . CLOUDCONVERT_LINK;
     kirimFileId($chat_id, FULL_PDF_FILE_ID, $caption);
@@ -214,6 +232,7 @@ function kirimPassword($chat_id, &$db) {
     kirimPesan(ADMIN_ID, "✅ Password ke $chat_id: " . PDF_PASSWORD);
 }
 
+// ========== FUNGSI HANDLE BUKTI TRANSFER ==========
 function handlePaymentProof($chat_id, $msg, $username, $nama, &$db) {
     $caption = "🔔 *BUKTI TRANSFER*\n\nNama: $nama\nUsername: @$username\nChat ID: `$chat_id`\nWaktu: " . date('d/m/Y H:i:s');
     $keyboard = ['inline_keyboard' => [[
@@ -255,6 +274,7 @@ function kirimDokumenWithKeyboard($chat_id, $file_id, $caption, $keyboard) {
     curl_close($ch);
 }
 
+// ========== FUNGSI SAPA USER ==========
 function sapaUser($chat_id, $nama, $username) {
     kirimPesan($chat_id, "Halo *$nama*! 😂\nSelamat datang di *JAILBREAK STORE*\n\nFitur:\n• /katalog\n• /beli\n• /chat\n• /lupapassword\n\nUsername: $username\nChat ID: `$chat_id`\n\n💰 Transfer: " . SAWERIA_LINK);
 }
@@ -321,6 +341,7 @@ function cekLimit($chat_id, &$db) {
     kirimPesan($chat_id, "📊 *Status Chat:*\nTotal beli: $total\nTotal bonus: " . (20 * $total) . "\nSisa: {$db['chats'][$chat_id]['remaining']}");
 }
 
+// ========== FUNGSI KIRIM PESAN DASAR ==========
 function kirimPesan($chat_id, $text) {
     $url = "https://api.telegram.org/bot" . BOT_TOKEN . "/sendMessage";
     $post = ['chat_id' => $chat_id, 'text' => $text, 'parse_mode' => 'Markdown'];

@@ -1,23 +1,17 @@
 <?php
 // ====================================================
-// JAILBREAK BOT - OXYMAX FINAL EDITION
-// VERSION: 6.0 (27 Feb 2026)
-// PASSWORD AMAN - GEMINI FIXED - QRIS ACTIVE
+// JAILBREAK BOT - KALI LINUX EDITION
+// VERSION: 8.0 (27 Feb 2026)
+// GEMINI FIXED - ALL USERS WELCOME
 // ====================================================
 
 // ========== LOAD ENVIRONMENT ==========
-$required_vars = ['BOT_TOKEN', 'ADMIN_ID', 'GEMINI_API_KEY'];
-foreach ($required_vars as $var) {
-    if (!getenv($var)) {
-        http_response_code(500);
-        die("❌ Environment variable $var tidak ditemukan!\n");
-    }
-}
-
-define('BOT_TOKEN', getenv('BOT_TOKEN'));
-define('ADMIN_ID', getenv('ADMIN_ID'));
-define('GEMINI_API_KEY', getenv('GEMINI_API_KEY'));
-define('SAWERIA_LINK', getenv('SAWERIA_LINK') ?: 'https://saweria.co/Kikomaukiko');
+// Untuk testing di Kali, kita pake manual dulu
+// Nanti kalo deploy ke Railway, pake getenv
+define('BOT_TOKEN', '8045718722:AAGfUipGjliHIqB0zJ9Y7y0JUCyQ8eYGyps');
+define('ADMIN_ID', '7710155531');
+define('GEMINI_API_KEY', 'AIzaSyBwkeqNk7VFKDN3y1qhu-LFyWNT598UieU');
+define('SAWERIA_LINK', 'https://saweria.co/Kikomaukiko');
 define('PREVIEW_FILE_ID', 'BQACAgUAAxkBAANQaZ8AAcdi8rwd5JLrKVvV1x-h_vVrAAKXGwACR4b5VLZWFuSlBdUIOgQ');
 define('FULL_PDF_FILE_ID', 'BQACAgUAAxkDAAIBQWmgFiL1zVp9BTcqBq1o4GHYYSUmAALEHAAC6xYAAVXigx0pjSHNNToE');
 define('PDF_PASSWORD', 'GQ3A-J6G8-5235');
@@ -30,11 +24,11 @@ ini_set('log_errors', 1);
 ini_set('error_log', '/tmp/php_errors.log');
 error_log("🚀 BOT STARTED at " . date('Y-m-d H:i:s'));
 
-// Daftar model Gemini 2026 (prioritas)
+// ========== DAFTAR MODEL GEMINI YANG PASTI AKTIF ==========
 $GEMINI_MODELS = [
-    'gemini-2.5-flash',
-    'gemini-flash-latest',
-    'gemini-2.5-flash-lite'
+    'gemini-1.5-flash',      // Paling stabil
+    'gemini-1.5-pro',        // Cadangan
+    'gemini-1.0-pro'         // Legacy
 ];
 
 // ========== DATABASE ==========
@@ -72,21 +66,18 @@ if (!empty($input)) {
     }
 }
 
-// ========== HEALTHCHECK HANDLER (AMAN - TANPA PASSWORD) ==========
+// ========== HEALTHCHECK HANDLER ==========
 http_response_code(200);
 header('Content-Type: text/plain');
-echo "🚀 JAILBREAK BOT - OXYMAX FINAL EDITION\n";
+echo "🚀 JAILBREAK BOT - KALI LINUX EDITION\n";
 echo "====================================\n";
 echo "✅ Status: RUNNING\n";
 echo "✅ PHP Version: " . phpversion() . "\n";
 echo "✅ Bot Token: " . substr(BOT_TOKEN, 0, 15) . "...\n";
 echo "✅ Admin ID: " . ADMIN_ID . "\n";
-echo "✅ Gemini API: " . substr(GEMINI_API_KEY, 0, 10) . "...\n";
 echo "✅ File: ScriptMaster.pdf\n";
 echo "✅ QRIS: TERPASANG\n";
-echo "✅ CloudConvert: " . CLOUDCONVERT_LINK . "\n";
 echo "✅ Time: " . date('Y-m-d H:i:s') . "\n";
-echo "✅ Environment: " . (getenv('RAILWAY_ENVIRONMENT') ?: 'production') . "\n";
 echo "====================================\n";
 echo "📡 Webhook URL: https://botjailtelegram.up.railway.app\n";
 echo "📦 Pending updates: " . getPendingCount() . "\n";
@@ -104,7 +95,7 @@ function getPendingCount() {
     return $data['result']['pending_update_count'] ?? 'unknown';
 }
 
-// ========== FUNGSI UPDATE HANDLER ==========
+// ========== FUNGSI UPDATE HANDLER (TANPA FILTER) ==========
 function processUpdate($update, &$db) {
     error_log("🔔 UPDATE RECEIVED: " . json_encode($update));
     
@@ -127,6 +118,7 @@ function processUpdate($update, &$db) {
     
     error_log("💬 PESAN dari $chat_id ($username): $text");
     
+    // HANDLE SEMUA USER, BUKAN CUMA ADMIN!
     if (isset($msg['photo'])) {
         error_log("📸 FOTO dari $chat_id");
         handlePaymentProof($chat_id, $msg, $username, $nama, $db);
@@ -174,7 +166,7 @@ function processUpdate($update, &$db) {
     }
 }
 
-// ========== FUNGSI CALLBACK ==========
+// ========== FUNGSI CALLBACK (TETAP FILTER ADMIN) ==========
 function handleCallbackQuery($callback, &$db) {
     $data = $callback['data'];
     $chat_id = $callback['message']['chat']['id'];
@@ -184,9 +176,10 @@ function handleCallbackQuery($callback, &$db) {
     
     error_log("🟢 CALLBACK: $data dari user $from_id");
     
+    // INI FILTER KHUSUS ADMIN UNTUK KONFIRMASI/ TOLAK
     if ($from_id != ADMIN_ID) {
-        error_log("⚠️ BUKAN ADMIN: $from_id");
-        answerCallbackQuery($callback['id'], "Lu bukan admin!", true);
+        error_log("⚠️ BUKAN ADMIN: $from_id - IGNORED");
+        answerCallbackQuery($callback['id'], "Hanya admin yang bisa melakukan ini!", true);
         return;
     }
     
@@ -214,6 +207,67 @@ function handleCallbackQuery($callback, &$db) {
         
         answerCallbackQuery($callback['id'], "❌ Pembayaran ditolak. User sudah dinotifikasi.");
     }
+}
+
+// ========== FUNGSI GEMINI (STABIL PAKE 1.5) ==========
+function callGemini($prompt) {
+    $api_key = GEMINI_API_KEY;
+    global $GEMINI_MODELS;
+    
+    $max_retries = 2;
+    $retry_delay = 1;
+    
+    foreach ($GEMINI_MODELS as $model) {
+        for ($attempt = 1; $attempt <= $max_retries; $attempt++) {
+            error_log("🤖 Mencoba model: $model (percobaan $attempt)");
+            
+            $url = "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key={$api_key}";
+            
+            $data = [
+                'contents' => [
+                    [
+                        'parts' => [
+                            ['text' => $prompt]
+                        ]
+                    ]
+                ],
+                'generationConfig' => [
+                    'temperature' => 0.7,
+                    'maxOutputTokens' => 1024,
+                ]
+            ];
+            
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, $url);
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 15);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+            
+            $response = curl_exec($ch);
+            $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $curl_error = curl_error($ch);
+            curl_close($ch);
+            
+            if ($http_code == 200) {
+                $result = json_decode($response, true);
+                if (isset($result['candidates'][0]['content']['parts'][0]['text'])) {
+                    error_log("✅ Gemini sukses dengan model: $model");
+                    return $result['candidates'][0]['content']['parts'][0]['text'];
+                }
+            } else {
+                error_log("⚠️ Model $model gagal: HTTP $http_code");
+                if ($attempt < $max_retries) {
+                    sleep($retry_delay);
+                }
+            }
+        }
+    }
+    
+    error_log("❌ Semua model gagal");
+    return "⚠️ Maaf, layanan sedang sibuk. Silakan coba lagi nanti.";
 }
 
 // ========== FUNGSI KIRIM GAMBAR ==========
@@ -402,60 +456,7 @@ function kirimUlangPassword($chat_id, &$db) {
     }
 }
 
-// ========== FUNGSI GEMINI FIXED ==========
-function callGemini($prompt) {
-    $api_key = GEMINI_API_KEY;
-    global $GEMINI_MODELS;
-    
-    foreach ($GEMINI_MODELS as $model) {
-        error_log("🤖 Mencoba model: $model");
-        
-        $url = "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key={$api_key}";
-        
-        $data = [
-            'contents' => [
-                [
-                    'parts' => [
-                        ['text' => $prompt]
-                    ]
-                ]
-            ],
-            'generationConfig' => [
-                'temperature' => 0.7,
-                'topK' => 40,
-                'topP' => 0.95,
-                'maxOutputTokens' => 1024,
-            ]
-        ];
-        
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 15);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        
-        $response = curl_exec($ch);
-        $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
-        
-        if ($http_code == 200) {
-            $result = json_decode($response, true);
-            if (isset($result['candidates'][0]['content']['parts'][0]['text'])) {
-                error_log("✅ Gemini sukses dengan model: $model");
-                return $result['candidates'][0]['content']['parts'][0]['text'];
-            }
-        } else {
-            error_log("⚠️ Model $model gagal dengan HTTP $http_code");
-        }
-    }
-    
-    error_log("❌ Semua model Gemini gagal");
-    return "⚠️ Maaf, layanan sedang sibuk. Silakan coba lagi nanti.";
-}
-
+// ========== FUNGSI CHAT GEMINI ==========
 function cekChatAccess($chat_id, $nama, &$db) {
     if (!isset($db['chats'][$chat_id])) {
         kirimPesan($chat_id, "❌ Beli dulu: /beli");

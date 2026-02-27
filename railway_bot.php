@@ -1,8 +1,8 @@
 <?php
 // ====================================================
-// JAILBREAK BOT - OXYMAX DEBUG EDITION
-// VERSION: 5.1 (27 Feb 2026)
-// DENGAN LOGGING UNTUK DEBUG
+// JAILBREAK BOT - OXYMAX FINAL EDITION
+// VERSION: 6.0 (27 Feb 2026)
+// PASSWORD AMAN - GEMINI FIXED - QRIS ACTIVE
 // ====================================================
 
 // ========== LOAD ENVIRONMENT ==========
@@ -30,13 +30,12 @@ ini_set('log_errors', 1);
 ini_set('error_log', '/tmp/php_errors.log');
 error_log("🚀 BOT STARTED at " . date('Y-m-d H:i:s'));
 
-// Daftar model Gemini 2026
+// Daftar model Gemini 2026 (prioritas)
 $GEMINI_MODELS = [
-    'gemini-2.5-flash',      // Cepat, limit besar (utama)
-    'gemini-flash-latest',    // Latest flash
-    'gemini-2.0-flash',       // Legacy stabil
-    'gemini-2.5-flash-lite',  // Irit token
-    'gemini-2.5-pro'          // Premium (kalo butuh kualitas)
+    'gemini-2.5-flash',
+    'gemini-flash-latest',
+    'gemini-2.0-flash',
+    'gemini-2.5-flash-lite'
 ];
 
 // ========== DATABASE ==========
@@ -74,10 +73,10 @@ if (!empty($input)) {
     }
 }
 
-// ========== HEALTHCHECK HANDLER ==========
+// ========== HEALTHCHECK HANDLER (AMAN - TANPA PASSWORD) ==========
 http_response_code(200);
 header('Content-Type: text/plain');
-echo "🚀 JAILBREAK BOT - OXYMAX DEBUG EDITION\n";
+echo "🚀 JAILBREAK BOT - OXYMAX FINAL EDITION\n";
 echo "====================================\n";
 echo "✅ Status: RUNNING\n";
 echo "✅ PHP Version: " . phpversion() . "\n";
@@ -85,7 +84,6 @@ echo "✅ Bot Token: " . substr(BOT_TOKEN, 0, 15) . "...\n";
 echo "✅ Admin ID: " . ADMIN_ID . "\n";
 echo "✅ Gemini API: " . substr(GEMINI_API_KEY, 0, 10) . "...\n";
 echo "✅ File: ScriptMaster.pdf\n";
-echo "✅ Password: " . PDF_PASSWORD . "\n";
 echo "✅ QRIS: TERPASANG\n";
 echo "✅ CloudConvert: " . CLOUDCONVERT_LINK . "\n";
 echo "✅ Time: " . date('Y-m-d H:i:s') . "\n";
@@ -107,12 +105,10 @@ function getPendingCount() {
     return $data['result']['pending_update_count'] ?? 'unknown';
 }
 
-// ========== FUNGSI UPDATE HANDLER (DENGAN LOGGING) ==========
+// ========== FUNGSI UPDATE HANDLER ==========
 function processUpdate($update, &$db) {
-    // LOG SEMUA UPDATE YANG MASUK
     error_log("🔔 UPDATE RECEIVED: " . json_encode($update));
     
-    // Handle callback query (tombol diklik)
     if (isset($update['callback_query'])) {
         error_log("🟢 CALLBACK QUERY dari " . $update['callback_query']['from']['id']);
         handleCallbackQuery($update['callback_query'], $db);
@@ -132,7 +128,6 @@ function processUpdate($update, &$db) {
     
     error_log("💬 PESAN dari $chat_id ($username): $text");
     
-    // Handle foto / dokumen (bukti transfer)
     if (isset($msg['photo'])) {
         error_log("📸 FOTO dari $chat_id");
         handlePaymentProof($chat_id, $msg, $username, $nama, $db);
@@ -145,7 +140,6 @@ function processUpdate($update, &$db) {
         return;
     }
     
-    // Command handler
     switch ($text) {
         case '/start':
             error_log("✅ /start dari $chat_id");
@@ -181,7 +175,7 @@ function processUpdate($update, &$db) {
     }
 }
 
-// ========== FUNGSI CALLBACK (TOMBOL) ==========
+// ========== FUNGSI CALLBACK ==========
 function handleCallbackQuery($callback, &$db) {
     $data = $callback['data'];
     $chat_id = $callback['message']['chat']['id'];
@@ -191,44 +185,32 @@ function handleCallbackQuery($callback, &$db) {
     
     error_log("🟢 CALLBACK: $data dari user $from_id");
     
-    // Cuma admin yang boleh konfirmasi/tolak
     if ($from_id != ADMIN_ID) {
         error_log("⚠️ BUKAN ADMIN: $from_id");
         answerCallbackQuery($callback['id'], "Lu bukan admin!", true);
         return;
     }
     
-    // ========== TOMBOL KONFIRMASI ==========
     if (strpos($data, 'confirm_') === 0) {
         $user_chat_id = str_replace('confirm_', '', $data);
         error_log("✅ KONFIRMASI untuk user $user_chat_id");
         
-        // Kirim password ke user
         kirimPassword($user_chat_id, $db);
         
-        // Update pesan admin jadi CONFIRMED
         $new_caption = $message['caption'] . "\n\n✅ *CONFIRMED*";
         editMessageCaption($chat_id, $message_id, $new_caption);
-        
-        // Hapus keyboard
         editMessageReplyMarkup($chat_id, $message_id, null);
-        
         answerCallbackQuery($callback['id'], "✅ Pembayaran dikonfirmasi! Password udah dikirim.");
     }
     
-    // ========== TOMBOL TOLAK ==========
     elseif (strpos($data, 'reject_') === 0) {
         $user_chat_id = str_replace('reject_', '', $data);
         error_log("❌ TOLAK untuk user $user_chat_id");
         
-        // Update pesan admin jadi REJECTED
         $new_caption = $message['caption'] . "\n\n❌ *REJECTED*";
         editMessageCaption($chat_id, $message_id, $new_caption);
-        
-        // Hapus keyboard
         editMessageReplyMarkup($chat_id, $message_id, null);
         
-        // Kirim notifikasi ke user
         kirimPesan($user_chat_id, "❌ *Maaf, bukti transfer Anda ditolak.*\n\nPastikan Anda mentransfer Rp25.000 ke Saweria dan kirim screenshot yang jelas.\n\nKalo ada kendala, hubungi admin.");
         
         answerCallbackQuery($callback['id'], "❌ Pembayaran ditolak. User sudah dinotifikasi.");
@@ -254,20 +236,18 @@ function kirimGambarId($chat_id, $file_id, $caption = '') {
     curl_close($ch);
 }
 
-// ========== FUNGSI KIRIM PASSWORD KE USER ==========
+// ========== FUNGSI KIRIM PASSWORD ==========
 function kirimPassword($chat_id, &$db) {
     $password = PDF_PASSWORD;
     
-    // Kirim file PDF dengan link CloudConvert
     $caption = "📄 *SCRIPT MASTER PDF*\n\n"
              . "🔑 *Password:* `$password`\n\n"
              . "🎁 Bonus chat: /chat\n\n"
-             . "📌 *Convert PDF ke TXT (biar bisa copy full):*\n"
+             . "📌 *Convert PDF ke TXT:*\n"
              . CLOUDCONVERT_LINK;
     
     kirimFileId($chat_id, FULL_PDF_FILE_ID, $caption);
     
-    // Simpan transaksi
     $db['transactions'][] = [
         'chat_id' => $chat_id,
         'password' => $password,
@@ -275,16 +255,13 @@ function kirimPassword($chat_id, &$db) {
         'bonus_chat' => 20
     ];
     
-    // Update bonus chat
     if (!isset($db['chats'][$chat_id])) {
         $db['chats'][$chat_id] = ['remaining' => 20, 'mode' => 'idle', 'history' => []];
     } else {
         $db['chats'][$chat_id]['remaining'] += 20;
     }
     
-    // Hapus dari pending
     $db['pending'] = array_filter($db['pending'], fn($p) => $p['chat_id'] != $chat_id);
-    
     saveDB($db);
     
     kirimPesan(ADMIN_ID, "✅ Password terkirim ke `$chat_id`\nPassword: `$password`");
@@ -298,7 +275,6 @@ function handlePaymentProof($chat_id, $msg, $username, $nama, &$db) {
              . "Chat ID: `$chat_id`\n"
              . "Waktu: " . date('d/m/Y H:i:s');
     
-    // BUAT 2 TOMBOL: KONFIRMASI & TOLAK
     $keyboard = [
         'inline_keyboard' => [
             [
@@ -319,7 +295,7 @@ function handlePaymentProof($chat_id, $msg, $username, $nama, &$db) {
     kirimPesan($chat_id, "✅ Bukti diterima! Admin akan konfirmasi.");
 }
 
-// ========== FUNGSI KIRIM GAMBAR DENGAN KEYBOARD ==========
+// ========== FUNGSI KIRIM DENGAN KEYBOARD ==========
 function kirimFotoWithKeyboard($chat_id, $file_id, $caption, $keyboard) {
     $url = "https://api.telegram.org/bot" . BOT_TOKEN . "/sendPhoto";
     $post = [
@@ -383,18 +359,16 @@ function tampilKatalog($chat_id) {
           . "━━━━━━━━━━━━━━━━━━━━━━━\n"
           . "Cara beli:\n"
           . "1. Klik /beli\n"
-          . "2. Scan QRIS yang dikirim bot\n"
+          . "2. Scan QRIS\n"
           . "3. Transfer Rp25.000\n"
-          . "4. Kirim BUKTI TRANSFER (screenshot) ke bot ini\n\n"
-          . "💡 *Password akan diberikan setelah konfirmasi admin*\n\n"
+          . "4. Kirim bukti transfer\n\n"
           . "Langsung klik:\n"
           . "/beli";
     kirimPesan($chat_id, $text);
 }
 
-// ========== FUNGSI PROSES BELI (DENGAN QRIS) ==========
+// ========== FUNGSI PROSES BELI ==========
 function prosesBeli($chat_id, $username, $nama, &$db) {
-    // Kirim QRIS dulu
     kirimGambarId($chat_id, QRIS_FILE_ID, "📱 *SCAN QRIS INI*\n\nScan QR code di atas untuk transfer Rp25.000 ke Saweria.\n\nAtau klik link: " . SAWERIA_LINK);
     
     $db['pending'][] = ['chat_id' => $chat_id, 'username' => $username, 'nama' => $nama, 'waktu' => time()];
@@ -403,11 +377,11 @@ function prosesBeli($chat_id, $username, $nama, &$db) {
     $text = "✅ *Pesanan diterima!*\n\n"
           . "Silakan transfer Rp25.000 via QRIS di atas.\n\n"
           . "**SETELAH TRANSFER**, kirim BUKTI TRANSFER (screenshot) KE BOT INI.\n\n"
-          . "Admin bakal verifikasi dan kirimkan password untuk membuka `ScriptMaster.pdf`.\n\n"
-          . "Bonus: Nanti dapet 20x chat Gemini gratis!";
+          . "Admin bakal verifikasi dan kirimkan password.\n\n"
+          . "Bonus: 20x chat Gemini!";
     
     kirimPesan($chat_id, $text);
-    kirimPesan(ADMIN_ID, "🔔 Order baru dari @$username\nChat ID: `$chat_id`\nProduk: Script Master Pack");
+    kirimPesan(ADMIN_ID, "🔔 Order baru dari @$username\nChat ID: `$chat_id`");
 }
 
 // ========== FUNGSI LUPA PASSWORD ==========
@@ -429,119 +403,60 @@ function kirimUlangPassword($chat_id, &$db) {
     }
 }
 
-// ========== FUNGSI GEMINI DENGAN SMART MODEL SELECT ==========
-function pilihModelGemini($prompt) {
-    $panjang = strlen($prompt);
-    $kompleks = preg_match('/\b(analisis|analisa|jabarkan|jelaskan detail|kompleks|rumit)\b/i', $prompt);
-    
-    if ($kompleks || $panjang > 500) {
-        return 'gemini-2.5-pro';
-    } elseif ($panjang > 200) {
-        return 'gemini-2.5-flash';
-    } else {
-        return 'gemini-2.5-flash-lite';
-    }
-}
-
+// ========== FUNGSI GEMINI FIXED ==========
 function callGemini($prompt) {
     $api_key = GEMINI_API_KEY;
-    $model = pilihModelGemini($prompt);
+    global $GEMINI_MODELS;
     
-    error_log("🤖 GEMINI using model: $model");
-    
-    $url = "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key={$api_key}";
-    
-    $data = [
-        'contents' => [
-            [
-                'parts' => [
-                    ['text' => $prompt]
+    foreach ($GEMINI_MODELS as $model) {
+        error_log("🤖 Mencoba model: $model");
+        
+        $url = "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key={$api_key}";
+        
+        $data = [
+            'contents' => [
+                [
+                    'parts' => [
+                        ['text' => $prompt]
+                    ]
                 ]
+            ],
+            'generationConfig' => [
+                'temperature' => 0.7,
+                'topK' => 40,
+                'topP' => 0.95,
+                'maxOutputTokens' => 1024,
             ]
-        ],
-        'generationConfig' => [
-            'temperature' => 0.9,
-            'topK' => 40,
-            'topP' => 0.95,
-            'maxOutputTokens' => 2048,
-        ]
-    ];
-    
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, $url);
-    curl_setopt($ch, CURLOPT_POST, true);
-    curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 30);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
-    
-    $response = curl_exec($ch);
-    $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
-    
-    // Jika error 403, coba dengan model fallback
-    if ($http_code == 403) {
-        error_log("⚠️ GEMINI 403, fallback ke 2.0-flash");
-        return callGeminiFallback($prompt, 'gemini-2.0-flash');
-    }
-    
-    if ($http_code != 200) {
-        error_log("❌ GEMINI error $http_code");
-        return "⚠️ Error Gemini (HTTP $http_code). Coba lagi nanti.";
-    }
-    
-    $result = json_decode($response, true);
-    
-    if (isset($result['candidates'][0]['content']['parts'][0]['text'])) {
-        return $result['candidates'][0]['content']['parts'][0]['text'];
-    }
-    
-    error_log("❌ GEMINI no text in response");
-    return "⚠️ Maaf, Gemini tidak bisa menjawab saat ini.";
-}
-
-function callGeminiFallback($prompt, $fallback_model) {
-    $api_key = GEMINI_API_KEY;
-    $url = "https://generativelanguage.googleapis.com/v1beta/models/{$fallback_model}:generateContent?key={$api_key}";
-    
-    $data = [
-        'contents' => [
-            [
-                'parts' => [
-                    ['text' => $prompt]
-                ]
-            ]
-        ]
-    ];
-    
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, $url);
-    curl_setopt($ch, CURLOPT_POST, true);
-    curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 30);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
-    
-    $response = curl_exec($ch);
-    $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
-    
-    if ($http_code == 200) {
-        $result = json_decode($response, true);
-        if (isset($result['candidates'][0]['content']['parts'][0]['text'])) {
-            return $result['candidates'][0]['content']['parts'][0]['text'] . "\n\n_(Respons dari model: $fallback_model)_";
+        ];
+        
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 15);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        
+        $response = curl_exec($ch);
+        $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+        
+        if ($http_code == 200) {
+            $result = json_decode($response, true);
+            if (isset($result['candidates'][0]['content']['parts'][0]['text'])) {
+                error_log("✅ Gemini sukses dengan model: $model");
+                return $result['candidates'][0]['content']['parts'][0]['text'];
+            }
+        } else {
+            error_log("⚠️ Model $model gagal dengan HTTP $http_code");
         }
     }
     
-    error_log("❌ FALLBACK juga error $http_code");
-    return "⚠️ Sistem sedang sibuk. Silakan coba lagi nanti.";
+    error_log("❌ Semua model Gemini gagal");
+    return "⚠️ Maaf, layanan sedang sibuk. Silakan coba lagi nanti.";
 }
 
-// ========== FUNGSI CHAT GEMINI ==========
 function cekChatAccess($chat_id, $nama, &$db) {
     if (!isset($db['chats'][$chat_id])) {
         kirimPesan($chat_id, "❌ Beli dulu: /beli");

@@ -1,7 +1,8 @@
 <?php
 // ====================================================
-// JAILBREAK BOT - PREMIUM EDITION (GEMINI 2.5 FIX)
-// WITH MULTI-MODEL FALLBACK
+// JAILBREAK BOT - OXYMAX FINAL EDITION
+// VERSION: 5.0 (27 Feb 2026)
+// QRIS + GEMINI 2.5 + CONFIRM/REJECT
 // ====================================================
 
 // ========== LOAD ENVIRONMENT ==========
@@ -21,15 +22,16 @@ define('PREVIEW_FILE_ID', 'BQACAgUAAxkBAANQaZ8AAcdi8rwd5JLrKVvV1x-h_vVrAAKXGwACR
 define('FULL_PDF_FILE_ID', 'BQACAgUAAxkDAAIBQWmgFiL1zVp9BTcqBq1o4GHYYSUmAALEHAAC6xYAAVXigx0pjSHNNToE');
 define('PDF_PASSWORD', 'GQ3A-J6G8-5235');
 define('CLOUDCONVERT_LINK', 'https://share.google/BXdUWNT2rXBg3syi4');
+define('QRIS_FILE_ID', 'AgACAgUAAxkDAAIBm2mg8iduJZA5v-PtiEjxzVailuP5AAJjDWsb6xYIVTD5YvSly8CBAQADAgADbQADOgQ');
 define('DB_FILE', 'database.json');
 
-// Daftar model Gemini yang tersedia (urut dari tercepat ke terlambat)
+// Daftar model Gemini 2026
 $GEMINI_MODELS = [
-    'gemini-2.5-flash',
-    'gemini-flash-latest',
-    'gemini-2.0-flash',
-    'gemini-2.5-pro',
-    'gemini-pro-latest'
+    'gemini-2.5-flash',      // Cepat, limit besar (utama)
+    'gemini-flash-latest',    // Latest flash
+    'gemini-2.0-flash',       // Legacy stabil
+    'gemini-2.5-flash-lite',  // Irit token
+    'gemini-2.5-pro'          // Premium (kalo butuh kualitas)
 ];
 
 // ========== DATABASE ==========
@@ -69,8 +71,8 @@ if (!empty($input)) {
 // ========== HEALTHCHECK HANDLER ==========
 http_response_code(200);
 header('Content-Type: text/plain');
-echo "🚀 JAILBREAK BOT - PREMIUM EDITION\n";
-echo "================================\n";
+echo "🚀 JAILBREAK BOT - OXYMAX EDITION v5.0\n";
+echo "====================================\n";
 echo "✅ Status: RUNNING\n";
 echo "✅ PHP Version: " . phpversion() . "\n";
 echo "✅ Bot Token: " . substr(BOT_TOKEN, 0, 15) . "...\n";
@@ -78,10 +80,11 @@ echo "✅ Admin ID: " . ADMIN_ID . "\n";
 echo "✅ Gemini API: " . substr(GEMINI_API_KEY, 0, 10) . "...\n";
 echo "✅ File: ScriptMaster.pdf\n";
 echo "✅ Password: " . PDF_PASSWORD . "\n";
+echo "✅ QRIS: TERPASANG\n";
 echo "✅ CloudConvert: " . CLOUDCONVERT_LINK . "\n";
 echo "✅ Time: " . date('Y-m-d H:i:s') . "\n";
 echo "✅ Environment: " . (getenv('RAILWAY_ENVIRONMENT') ?: 'production') . "\n";
-echo "================================\n";
+echo "====================================\n";
 echo "📡 Webhook URL: https://botjailtelegram.up.railway.app\n";
 echo "📦 Pending updates: " . getPendingCount() . "\n";
 exit(0);
@@ -197,6 +200,25 @@ function handleCallbackQuery($callback, &$db) {
     }
 }
 
+// ========== FUNGSI KIRIM GAMBAR ==========
+function kirimGambarId($chat_id, $file_id, $caption = '') {
+    $url = "https://api.telegram.org/bot" . BOT_TOKEN . "/sendPhoto";
+    $post = [
+        'chat_id' => $chat_id,
+        'photo' => $file_id,
+        'caption' => $caption,
+        'parse_mode' => 'Markdown'
+    ];
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $post);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+    curl_exec($ch);
+    curl_close($ch);
+}
+
 // ========== FUNGSI KIRIM PASSWORD KE USER ==========
 function kirimPassword($chat_id, &$db) {
     $password = PDF_PASSWORD;
@@ -262,6 +284,45 @@ function handlePaymentProof($chat_id, $msg, $username, $nama, &$db) {
     kirimPesan($chat_id, "✅ Bukti diterima! Admin akan konfirmasi.");
 }
 
+// ========== FUNGSI KIRIM GAMBAR DENGAN KEYBOARD ==========
+function kirimFotoWithKeyboard($chat_id, $file_id, $caption, $keyboard) {
+    $url = "https://api.telegram.org/bot" . BOT_TOKEN . "/sendPhoto";
+    $post = [
+        'chat_id' => $chat_id,
+        'photo' => $file_id,
+        'caption' => $caption,
+        'parse_mode' => 'Markdown',
+        'reply_markup' => json_encode($keyboard)
+    ];
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $post);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+    curl_exec($ch);
+    curl_close($ch);
+}
+
+function kirimDokumenWithKeyboard($chat_id, $file_id, $caption, $keyboard) {
+    $url = "https://api.telegram.org/bot" . BOT_TOKEN . "/sendDocument";
+    $post = [
+        'chat_id' => $chat_id,
+        'document' => $file_id,
+        'caption' => $caption,
+        'parse_mode' => 'Markdown',
+        'reply_markup' => json_encode($keyboard)
+    ];
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $post);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+    curl_exec($ch);
+    curl_close($ch);
+}
+
 // ========== FUNGSI SAPA USER ==========
 function sapaUser($chat_id, $nama, $username) {
     $text = "Halo *$nama*! 😂\nSelamat datang di *JAILBREAK STORE*\n\n"
@@ -286,26 +347,26 @@ function tampilKatalog($chat_id) {
           . "• Update metode jailbreak terbaru\n\n"
           . "━━━━━━━━━━━━━━━━━━━━━━━\n"
           . "Cara beli:\n"
-          . "1. Transfer Rp 25.000 ke Saweria:\n"
-          . "   " . SAWERIA_LINK . "\n"
-          . "2. Klik /beli\n"
-          . "3. Kirim BUKTI TRANSFER (screenshot) ke bot ini\n\n"
+          . "1. Klik /beli\n"
+          . "2. Scan QRIS yang dikirim bot\n"
+          . "3. Transfer Rp25.000\n"
+          . "4. Kirim BUKTI TRANSFER (screenshot) ke bot ini\n\n"
           . "💡 *Password akan diberikan setelah konfirmasi admin*\n\n"
           . "Langsung klik:\n"
           . "/beli";
     kirimPesan($chat_id, $text);
 }
 
-// ========== FUNGSI PROSES BELI ==========
+// ========== FUNGSI PROSES BELI (DENGAN QRIS) ==========
 function prosesBeli($chat_id, $username, $nama, &$db) {
+    // Kirim QRIS dulu
+    kirimGambarId($chat_id, QRIS_FILE_ID, "📱 *SCAN QRIS INI*\n\nScan QR code di atas untuk transfer Rp25.000 ke Saweria.\n\nAtau klik link: " . SAWERIA_LINK);
+    
     $db['pending'][] = ['chat_id' => $chat_id, 'username' => $username, 'nama' => $nama, 'waktu' => time()];
     saveDB($db);
     
     $text = "✅ *Pesanan diterima!*\n\n"
-          . "Produk: Script Master Pack\n"
-          . "Harga: Rp 25.000\n\n"
-          . "Silakan transfer ke:\n"
-          . SAWERIA_LINK . "\n\n"
+          . "Silakan transfer Rp25.000 via QRIS di atas.\n\n"
           . "**SETELAH TRANSFER**, kirim BUKTI TRANSFER (screenshot) KE BOT INI.\n\n"
           . "Admin bakal verifikasi dan kirimkan password untuk membuka `ScriptMaster.pdf`.\n\n"
           . "Bonus: Nanti dapet 20x chat Gemini gratis!";
@@ -333,62 +394,113 @@ function kirimUlangPassword($chat_id, &$db) {
     }
 }
 
-// ========== FUNGSI GEMINI DENGAN MULTI-MODEL FALLBACK ==========
-function callGemini($prompt) {
-    global $GEMINI_MODELS;
+// ========== FUNGSI GEMINI DENGAN SMART MODEL SELECT ==========
+function pilihModelGemini($prompt) {
+    $panjang = strlen($prompt);
+    $kompleks = preg_match('/\b(analisis|analisa|jabarkan|jelaskan detail|kompleks|rumit)\b/i', $prompt);
     
-    $api_key = GEMINI_API_KEY;
-    $last_error = '';
-    
-    // Coba setiap model secara berurutan
-    foreach ($GEMINI_MODELS as $model) {
-        $url = "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key={$api_key}";
-        
-        $data = [
-            'contents' => [
-                [
-                    'parts' => [
-                        ['text' => $prompt]
-                    ]
-                ]
-            ],
-            'generationConfig' => [
-                'temperature' => 0.9,
-                'topK' => 1,
-                'topP' => 1,
-                'maxOutputTokens' => 2048,
-            ]
-        ];
-        
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 15);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
-        
-        $response = curl_exec($ch);
-        $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
-        
-        // Jika sukses (200), parse response
-        if ($http_code == 200) {
-            $result = json_decode($response, true);
-            if (isset($result['candidates'][0]['content']['parts'][0]['text'])) {
-                return $result['candidates'][0]['content']['parts'][0]['text'];
-            }
-        }
-        
-        $last_error = "HTTP $http_code dengan model $model";
+    if ($kompleks || $panjang > 500) {
+        return 'gemini-2.5-pro';
+    } elseif ($panjang > 200) {
+        return 'gemini-2.5-flash';
+    } else {
+        return 'gemini-2.5-flash-lite';
     }
-    
-    // Jika semua model gagal
-    return "⚠️ Error Gemini: $last_error. Coba lagi nanti.";
 }
 
+function callGemini($prompt) {
+    $api_key = GEMINI_API_KEY;
+    $model = pilihModelGemini($prompt);
+    
+    $url = "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key={$api_key}";
+    
+    $data = [
+        'contents' => [
+            [
+                'parts' => [
+                    ['text' => $prompt]
+                ]
+            ]
+        ],
+        'generationConfig' => [
+            'temperature' => 0.9,
+            'topK' => 40,
+            'topP' => 0.95,
+            'maxOutputTokens' => 2048,
+        ]
+    ];
+    
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+    
+    $response = curl_exec($ch);
+    $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+    
+    // Jika error 403, coba dengan model fallback
+    if ($http_code == 403) {
+        return callGeminiFallback($prompt, 'gemini-2.0-flash');
+    }
+    
+    if ($http_code != 200) {
+        return "⚠️ Error Gemini (HTTP $http_code). Coba lagi nanti.";
+    }
+    
+    $result = json_decode($response, true);
+    
+    if (isset($result['candidates'][0]['content']['parts'][0]['text'])) {
+        return $result['candidates'][0]['content']['parts'][0]['text'];
+    }
+    
+    return "⚠️ Maaf, Gemini tidak bisa menjawab saat ini.";
+}
+
+function callGeminiFallback($prompt, $fallback_model) {
+    $api_key = GEMINI_API_KEY;
+    $url = "https://generativelanguage.googleapis.com/v1beta/models/{$fallback_model}:generateContent?key={$api_key}";
+    
+    $data = [
+        'contents' => [
+            [
+                'parts' => [
+                    ['text' => $prompt]
+                ]
+            ]
+        ]
+    ];
+    
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+    
+    $response = curl_exec($ch);
+    $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+    
+    if ($http_code == 200) {
+        $result = json_decode($response, true);
+        if (isset($result['candidates'][0]['content']['parts'][0]['text'])) {
+            return $result['candidates'][0]['content']['parts'][0]['text'] . "\n\n_(Respons dari model: $fallback_model)_";
+        }
+    }
+    
+    return "⚠️ Sistem sedang sibuk. Silakan coba lagi nanti.";
+}
+
+// ========== FUNGSI CHAT GEMINI ==========
 function cekChatAccess($chat_id, $nama, &$db) {
     if (!isset($db['chats'][$chat_id])) {
         kirimPesan($chat_id, "❌ Beli dulu: /beli");
@@ -438,7 +550,7 @@ function cekLimit($chat_id, &$db) {
                        . "Sisa chat: {$db['chats'][$chat_id]['remaining']}");
 }
 
-// ========== FUNGSI KIRIM PESAN ==========
+// ========== FUNGSI KIRIM PESAN DASAR ==========
 function kirimPesan($chat_id, $text) {
     $url = "https://api.telegram.org/bot" . BOT_TOKEN . "/sendMessage";
     $post = ['chat_id' => $chat_id, 'text' => $text, 'parse_mode' => 'Markdown'];
@@ -455,44 +567,6 @@ function kirimPesan($chat_id, $text) {
 function kirimFileId($chat_id, $file_id, $caption = '') {
     $url = "https://api.telegram.org/bot" . BOT_TOKEN . "/sendDocument";
     $post = ['chat_id' => $chat_id, 'document' => $file_id, 'caption' => $caption, 'parse_mode' => 'Markdown'];
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, $url);
-    curl_setopt($ch, CURLOPT_POST, true);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, $post);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 10);
-    curl_exec($ch);
-    curl_close($ch);
-}
-
-function kirimFotoWithKeyboard($chat_id, $file_id, $caption, $keyboard) {
-    $url = "https://api.telegram.org/bot" . BOT_TOKEN . "/sendPhoto";
-    $post = [
-        'chat_id' => $chat_id,
-        'photo' => $file_id,
-        'caption' => $caption,
-        'parse_mode' => 'Markdown',
-        'reply_markup' => json_encode($keyboard)
-    ];
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, $url);
-    curl_setopt($ch, CURLOPT_POST, true);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, $post);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 10);
-    curl_exec($ch);
-    curl_close($ch);
-}
-
-function kirimDokumenWithKeyboard($chat_id, $file_id, $caption, $keyboard) {
-    $url = "https://api.telegram.org/bot" . BOT_TOKEN . "/sendDocument";
-    $post = [
-        'chat_id' => $chat_id,
-        'document' => $file_id,
-        'caption' => $caption,
-        'parse_mode' => 'Markdown',
-        'reply_markup' => json_encode($keyboard)
-    ];
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $url);
     curl_setopt($ch, CURLOPT_POST, true);

@@ -34,7 +34,6 @@ error_log("🚀 BOT STARTED at " . date('Y-m-d H:i:s'));
 $GEMINI_MODELS = [
     'gemini-2.5-flash',
     'gemini-flash-latest',
-    'gemini-2.0-flash',
     'gemini-2.5-flash-lite'
 ];
 

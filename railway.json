@@ -3,9 +3,7 @@
     "builder": "NIXPACKS"
   },
   "deploy": {
-    "startCommand": "php railway_bot.php",
-    "restartPolicyType": "ON_FAILURE",
-    "healthcheckPath": null,
-    "healthcheckTimeout": 0
+    "startCommand": "php -S 0.0.0.0:$PORT railway_bot.php",
+    "restartPolicyType": "ON_FAILURE"
   }
 }
